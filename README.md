@@ -15,11 +15,11 @@
 
 * :rainbow: Easy to install
 * :handshake: Reliable, uses decentralized network advantages
-* :hammer_and_wrench: Customizable (config file)
-* :scroll: History stored in local files (lowb)
+* :hammer_and_wrench: Customizable (using config file)
+* :scroll: History stored in local files (powered by [lowdb](https://github.com/typicode/lowdb))
 * :rocket: Minimum server requirements: 1 vCPU and 512 MB of RAM
 * :carpentry_saw: You can setup the pool on a separate machine without a node
-* :chart_with_upwards_trend: Dashboard for voters, supports mobile version
+* :chart_with_upwards_trend: Dashboard for voters with mobile version support
 * :bell: Notification system via ADAMANT or Slack for admin
 
 ## Installation
@@ -56,7 +56,13 @@ npm run build:web
 
 ### Pre-launch tuning
 
-Now paste pool's secret phrase into config.json and you're ready to go:
+Copy default config as `config.jsonc`:
+
+```
+cp config.default.jsonc config.jsonc
+```
+
+And edit that file by inserting the pool's secret phrase as the minimum configuration, e.g. using `nano`:
 
 ```
 nano config.json
@@ -89,7 +95,7 @@ crontab -e
 and paste the string:
 
 ```
-@reboot cd /home/adamant/adamant-pool && pm2 start --name adamantpool app.js
+@reboot cd /home/adamant/adamant-pool && pm2 start npm --name "ADAMANT Pool" -- start
 ```
 
 ## Contribution
