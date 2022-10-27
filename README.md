@@ -16,7 +16,7 @@
 * :rainbow: Easy to install
 * :handshake: Reliable, uses decentralized network advantages
 * :hammer_and_wrench: Customizable (config file)
-* :scroll: History stored in local files (nedb)
+* :scroll: History stored in local files (lowb)
 * :rocket: Minimum server requirements: 1 vCPU and 512 MB of RAM
 * :carpentry_saw: You can setup the pool on a separate machine without a node
 * :chart_with_upwards_trend: Dashboard for voters, supports mobile version
