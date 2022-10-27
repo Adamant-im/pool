@@ -65,10 +65,10 @@ cp config.default.jsonc config.jsonc
 And edit that file by inserting the pool's secret phrase as the minimum configuration, e.g. using `nano`:
 
 ```
-nano config.json
+nano config.jsonc
 ```
 
-> See comments in `config.json` for more parameters.
+> See comments in `config.default.jsonc` for more parameters.
 
 ## Launching
 
