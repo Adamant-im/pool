@@ -1,0 +1,6 @@
+node_modules
+config.test.jsonc
+config.json
+config.jsonc
+logs
+db

@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500&display=swap');
+
+:root {
+  font-family: Exo 2,sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+
+  --mdc-theme-primary: #2e7eed;
+  --mdc-theme-secondary: #676778;
+  --mdc-theme-background: #424242;
+  --mdc-theme-surface: #424242;
+  --mdc-theme-error: #b71c1c;
+  --mdc-theme-on-primary: #fff;
+  --mdc-theme-on-secondary: hsla(0,0%,100%,.7);
+  --mdc-theme-on-surface: hsla(0,0%,100%,.7);
+  --mdc-theme-on-error: hsla(0,0%,100%,.7);
+  --mdc-theme-text-primary-on-background: rgba(0, 0, 0, 0.87);
+  --mdc-theme-text-secondary-on-background: rgba(0, 0, 0, 0.54);
+  --mdc-theme-text-hint-on-background: hsla(0,0%,100%,.7);
+  --mdc-theme-text-disabled-on-background: hsla(0,0%,100%,.7);
+  --mdc-theme-text-icon-on-background: hsla(0,0%,100%,.7);
+  --mdc-theme-text-primary-on-light: rgba(0, 0, 0, 0.87);
+  --mdc-theme-text-secondary-on-light: rgba(0, 0, 0, 0.54);
+  --mdc-theme-text-hint-on-light: hsla(0,0%,100%,.7);
+  --mdc-theme-text-disabled-on-light: hsla(0,0%,100%,.7);
+  --mdc-theme-text-icon-on-light: hsla(0,0%,100%,.7);
+  --mdc-theme-text-primary-on-dark: #424242;
+  --mdc-theme-text-secondary-on-dark: rgba(255, 255, 255, 0.7);
+  --mdc-theme-text-hint-on-dark: rgba(255, 255, 255, 0.5);
+  --mdc-theme-text-disabled-on-dark: rgba(255, 255, 255, 0.5);
+  --mdc-theme-text-icon-on-dark: rgba(255, 255, 255, 0.5);
+}
+
+body {
+  background: repeating-linear-gradient(140deg,#191919,#191919 .7px,#212121 0,#212121 5px);
+  color: #ffffff;
+}
+
+.mdc-data-table, .mdc-data-table__cell, .mdc-data-table__header-cell {
+  border-color: hsla(0,0%,100%,.12);
+}
+
+.mdc-data-table__header-cell, .mdc-data-table__cell,
+.mdc-data-table__pagination-rows-per-page-label,
+.mdc-data-table__pagination-total, .mdc-select:not(.mdc-select--disabled)
+.mdc-select__selected-text, .mdc-menu .mdc-deprecated-list {
+  color: hsla(0,0%,100%,.7);
+}
+
+.mdc-data-table__cell {
+  color: #fff;
+}
+
+.mdc-data-table__sort-icon-button {
+  color: hsla(0,0%,100%,.12);
+}
+
+.mdc-button--raised:disabled {
+  background-color: #43484F;
+}
+
+.mdc-data-table__header-cell--sorted .mdc-data-table__sort-icon-button {
+  color: hsla(0,0%,100%,.7);;
+}
+
+a {
+  color: rgb(189, 183, 175) !important;
+}
+
+a:hover {
+  color: rgb(117, 178, 208) !important;
+}
