@@ -4,3 +4,4 @@ config.json
 config.jsonc
 logs
 db
+.vscode
