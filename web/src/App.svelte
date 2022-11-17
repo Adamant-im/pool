@@ -60,7 +60,7 @@
 
     <p class="mt-4">
       Delegate "{store?.delegate.username}" distributes {system?.reward_percentage}% rewards to
-      voters {system?.donate_percentage ? `and donates ${system?.donate_percentage}` : '' } with
+      voters {system?.donate_percentage ? `and donates ${system?.donate_percentage}% to ADAMANT Foundation` : '' } with
       payouts every {system?.payoutperiod}. Minimum payout is {system?.minpayout} ADM.
     </p>
 
