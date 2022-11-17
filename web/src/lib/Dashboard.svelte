@@ -16,7 +16,7 @@
       },
       {
         name: 'Forged this period',
-        value: parseADM(store?.delegate.votesWeight),
+        value: parseADM(system?.payoutperiodForged),
         isADM: true,
       },
       {
