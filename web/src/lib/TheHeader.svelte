@@ -18,7 +18,7 @@
       </div>
     </div>
 
-    <a href="https://github.com/adamant-im/pool" class="text-2xl">
+    <a href="https://github.com/adamant-im/pool" target="_blank" class="text-2xl">
       <GithubIcon/>
     </a>
   </div>

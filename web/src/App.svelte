@@ -61,7 +61,7 @@
     <p class="mt-4">
       Delegate
       <b class="underline decoration-dotted">
-        <a href={`https://explorer.adamant.im/delegate/${store?.delegate.address}`}>
+        <a href={`https://explorer.adamant.im/delegate/${store?.delegate.address}`} target="_blank">
           {store?.delegate.username}
         </a>
       </b>
