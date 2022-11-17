@@ -50,7 +50,7 @@
       {voters.length}
     </span>
   </div>
-    <DataTable
+  <DataTable
     sortable
     bind:sort={sort}
     bind:sortDirection={sortDirection}
@@ -116,7 +116,7 @@
       {/each}
     </Body>
 
-    <Pagination slot="paginate">
+    <Pagination slot="paginate" class="flex-wrap">
       <svelte:fragment slot="rowsPerPage">
         <Label>Rows Per Page</Label>
         <Select variant="outlined" bind:value={rowsPerPage} noLabel>
