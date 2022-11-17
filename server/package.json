@@ -1,7 +1,4 @@
 {
-	"name": "adamant-pool",
-	"version": "2.0.3",
-	"description": "Forging Pool for ADAMANT blockchain",
 	"main": "src/app.js",
 	"type": "module",
 	"scripts": {
