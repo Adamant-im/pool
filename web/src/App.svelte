@@ -37,6 +37,8 @@
   };
 
   updateAll();
+
+  setInterval(() => updateAll(), 60 * 1000);
 </script>
 
 <TheHeader version={system?.version}/>
