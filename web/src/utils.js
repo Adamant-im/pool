@@ -46,7 +46,9 @@ export function formatDate(timestamp) {
  * @param {number} maximumFractionDigits
  * @return {string} formatted number
  */
-export function formatNumber(number, maximumFractionDigits = 4) {
+export function formatNumber(num, maximumFractionDigits = 4) {
+  const number = +num;
+
   if (typeof number === 'number' && !isNaN(number)) {
     if (number > 0 && number < 0.01) {
       return '< 0.01';
