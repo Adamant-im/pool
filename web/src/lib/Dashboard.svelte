@@ -1,6 +1,6 @@
 <script>
   import DashboardItem from './DashboardItem.svelte';
-  import {parseADM} from '../utils.js';
+  import {parseADM, formatNumber} from '../utils.js';
 
   export let store; export let system;
 
@@ -16,7 +16,7 @@
       },
       {
         name: 'Forged this period',
-        value: parseADM(system?.payoutperiodForged),
+        value: formatNumber(system?.payoutperiodForged, 2),
         isADM: true,
       },
       {
@@ -26,7 +26,7 @@
       },
       {
         name: 'Pending rewards',
-        value: parseADM(system?.payoutperiodRewards),
+        value: formatNumber(system?.payoutperiodRewards, 2),
         isADM: true,
       },
     ];
