@@ -42,7 +42,7 @@ export function formatDate(timestamp) {
  * Formats a number using fixed-point notation and digit grouping
  * @example
  * formatNumber(1234.54321) // '1,234.5432'
- * @param {number} number number to format
+ * @param {number} num number to format
  * @param {number} maximumFractionDigits
  * @return {string} formatted number
  */
