@@ -19,8 +19,8 @@
   $: slice = voters.slice(start, end);
   $: lastPage = Math.max(Math.ceil(voters.length / rowsPerPage) - 1, 0);
 
-  let sortDirection = 'ascending';
-  let sort = 'id';
+  let sortDirection = 'descending';
+  let sort = 'pending';
 
   function calcWeightPercent(weightADM) {
     const weightPercent = weightADM / votesWeight * 10000000000;
@@ -29,17 +29,7 @@
   }
 
   function handleSort() {
-    voters.sort((a, b) => {
-      const [aVal, bVal] = [a[sort], b[sort]][
-        sortDirection === 'ascending' ? 'slice' : 'reverse'
-      ]();
-
-      if (typeof aVal === 'string' && typeof bVal === 'string') {
-        return aVal.localeCompare(bVal);
-      }
-      return Number(aVal) - Number(bVal);
-    });
-    voters = voters;
+    voters = sortBy(sortDirection, sort, voters);
   }
 </script>
 

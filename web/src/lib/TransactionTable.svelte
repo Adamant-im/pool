@@ -17,8 +17,8 @@ $: end = Math.min(start + rowsPerPage, transactions.length);
 $: slice = transactions.slice(start, end);
 $: lastPage = Math.max(Math.ceil(transactions.length / rowsPerPage) - 1, 0);
 
-let sortDirection = 'ascending';
-let sort = 'id';
+let sortDirection = 'descending';
+let sort = 'timeStamp';
 
 function handleSort() {
   transactions = sortBy(sortDirection, sort, transactions);
