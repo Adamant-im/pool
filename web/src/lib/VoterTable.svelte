@@ -67,23 +67,23 @@
           <Label>Address</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
-        <Cell columnId="transactionId">
+        <Cell columnId="pending">
           <Label>Pending</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
-        <Cell columnId="payoutcount">
+        <Cell columnId="received">
           <Label>Received</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
-        <Cell columnId="payoutcount">
+        <Cell columnId="balanceADM">
           <Label>Balance</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
-        <Cell columnId="payoutcount">
+        <Cell columnId="votesCount">
           <Label>Votes</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
-        <Cell columnId="payoutcount">
+        <Cell columnId="weightADM">
           <Label>Weight</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
