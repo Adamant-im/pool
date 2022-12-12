@@ -70,6 +70,15 @@ nano config.jsonc
 
 > See comments in `config.default.jsonc` for more parameters.
 
+### Migration from v2
+
+To migrate a database from v2 run the migration script with the specified path to the target pool or database:
+
+```sh
+# or ~/adamant/adamant-pool/db
+$ node scripts/migrate.mjs ~/adamant/adamant-pool
+```
+
 ## Launching
 
 You can start the pool using `npm` command:
