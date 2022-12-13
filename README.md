@@ -90,7 +90,7 @@ npm run start
 but we recommend to use a process manager to start the pool, f.e. [`pm2`](https://pm2.keymetrics.io/):
 
 ```
-pm2 start ./start.sh --name "ADAMANT Pool"
+pm2 start ./scripts/start.sh --name "ADAMANT Pool"
 ```
 
 ## Add pool to cron
@@ -104,7 +104,7 @@ crontab -e
 and paste the string:
 
 ```
-@reboot cd /home/adamant/pool && pm2 start /home/adamant/pool/start.sh --name "ADAMANT Pool"
+@reboot cd /home/adamant/pool && pm2 start /home/adamant/pool/scripts/start.sh --name "ADAMANT Pool"
 ```
 
 ## Contribution
