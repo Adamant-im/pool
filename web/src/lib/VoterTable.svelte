@@ -9,7 +9,6 @@
 
   export let voters = [];
   export let votesWeight;
-  export let votersApi = '';
 
   let rowsPerPage = 10;
   let currentPage = 0;
@@ -86,22 +85,14 @@
     <Body>
       {#each slice as voter, index}
         <Row>
-          <Cell numeric>{index + 1 + currentPage * rowsPerPage}</Cell>
-          <Cell>{voter.address}</Cell>
-          <Cell>{formatNumber(voter.pending)}</Cell>
-          <Cell>{formatNumber(voter.received)}</Cell>
-          <Cell>
-            {votersApi.includes(voter.address) && voter.balanceADM ? formatNumber(voter.balanceADM) : '—'}
-          </Cell>
-          <Cell>
-            {votersApi.includes(voter.address) && voter.votesCount ? formatNumber(voter.votesCount) : '—'}
-          </Cell>
-          <Cell>
-            {votersApi.includes(voter.address) && voter.weightADM ? formatNumber(voter.weightADM) : '—'}
-          </Cell>
-          <Cell>
-            {votersApi.includes(voter.address) && votesWeight && voter.weightADM ? calcWeightPercent(voter.weightADM) : '—'}
-          </Cell>
+          <Cell numeric>{ index + 1 + currentPage * rowsPerPage }</Cell>
+          <Cell>{ voter.address }</Cell>
+          <Cell>{ voter.pending ? formatNumber(voter.pending) : '—' }</Cell>
+          <Cell>{ voter.received ? formatNumber(voter.received) : '—' }</Cell>
+          <Cell>{ voter.balanceADM ? formatNumber(voter.balanceADM) : '—' }</Cell>
+          <Cell>{ voter.votesCount ? formatNumber(voter.votesCount) : '—' }</Cell>
+          <Cell>{ voter.weightADM ? formatNumber(voter.weightADM) : '—' }</Cell>
+          <Cell>{ votesWeight && voter.weightADM ? calcWeightPercent(voter.weightADM) : '—' }</Cell>
         </Row>
       {/each}
     </Body>

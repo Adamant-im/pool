@@ -17,8 +17,6 @@
   let voters = [];
   let store; let system;
 
-  $: votersApi = store?.delegate.voters.map((delegate) => delegate.address).join(',');
-
   let isUpdating = false;
 
   const updateAll = async () => {
@@ -31,6 +29,13 @@
         store,
         system,
       ] = await getAll();
+
+      // merge and remove duplicates
+      voters = voters.concat(
+          store.delegate.voters.filter((storeVoter) => (
+            !voters.find((dbVoter) => storeVoter.address === dbVoter.address)
+          )),
+      );
     } finally {
       setTimeout(() => (isUpdating = false), 1000);
     }
@@ -63,7 +68,7 @@
     <p class="mt-4">
       Delegate
       <b class="underline decoration-dotted">
-        <a href={`https://explorer.adamant.im/delegate/${store?.delegate.address}`} target="_blank">
+        <a href={`https://explorer.adamant.im/delegate/${store?.delegate.address}`} target="_blank" rel="noreferrer">
           {store?.delegate.username}
         </a>
       </b>
@@ -81,7 +86,6 @@
   <VoterTable
     voters={voters}
     votesWeight={store?.delegate.votesWeight}
-    votersApi={votersApi}
   />
 
   <TransactionTable
