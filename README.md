@@ -33,13 +33,13 @@
 Clone the repository with pool into a newly created directory:
 
 ```
-git clone https://github.com/Adamant-im/adamant-pool
+git clone https://github.com/Adamant-im/pool
 ```
 
 Move to directory with the cloned repository:
 
 ```
-cd adamant-pool
+cd pool
 ```
 
 Install dependencies using npm or any other package manager:
