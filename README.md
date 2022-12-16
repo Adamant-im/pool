@@ -1,4 +1,8 @@
-> Read more about [Forging, delegates, Fair dPoS, and how to run your Forging pool](https://medium.com/adamant-im/earning-money-on-adm-forging-4c7b6eb15516).
+# ADAMANT Forging Pool
+
+> Read more about [Forging, delegates, Fair dPoS, and how to run your Forging pool](https://medium.com/adamant-im/earning-money-on-adm-forging-4c7b6eb15516)
+
+> This software is a successor of outdated [v2 Forging pool](https://github.com/Adamant-im/adamant-pool)
 
 <br>
 
@@ -90,7 +94,7 @@ npm run start
 but we recommend to use a process manager to start the pool, f.e. [`pm2`](https://pm2.keymetrics.io/):
 
 ```
-pm2 start ./scripts/start.sh --name "ADAMANT Pool"
+pm2 start ./scripts/start.sh --name "adamantpool"
 ```
 
 ## Add pool to cron
@@ -104,7 +108,7 @@ crontab -e
 and paste the string:
 
 ```
-@reboot cd /home/adamant/pool && pm2 start /home/adamant/pool/scripts/start.sh --name "ADAMANT Pool"
+@reboot cd /home/adamant/pool && pm2 start /home/adamant/pool/scripts/start.sh --name "adamantpool"
 ```
 
 ## Contribution
