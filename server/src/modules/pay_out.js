@@ -237,7 +237,7 @@ class Payer {
       const {periodInfo} = this;
       const {periodTotalForged, periodUserRewards} = periodInfo;
 
-      const donateADM = config.donate_percentage * periodTotalForged / 100;
+      const donateADM = (config.donate_percentage * periodTotalForged) / 100;
       const maintenanceADM = periodTotalForged - periodUserRewards - donateADM;
 
       const payAmount = `ADM (${config.poolsShare.toFixed(2)}%) pool's share to maintenance wallet ${config.maintenancewallet}`;
@@ -296,7 +296,7 @@ class Payer {
       const {periodInfo} = this;
       const {periodTotalForged} = periodInfo;
 
-      const donateADM = config.donate_percentage * periodTotalForged / 100;
+      const donateADM = (config.donate_percentage * periodTotalForged) / 100;
 
       const donationAmount = `ADM (${config.donate_percentage.toFixed(2)}%) donation to ${config.donatewallet}`;
       const notifyDonationAmount = `${donateADM.toFixed(4)} ${donationAmount}`;
