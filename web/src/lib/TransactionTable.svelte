@@ -1,28 +1,30 @@
 <script>
-// @ts-nocheck
-import DataTable, {Head, Row, Cell, Body, Pagination} from '@smui/data-table';
-import IconButton from '@smui/icon-button';
-import {Label} from '@smui/common';
-import Select, {Option} from '@smui/select';
+  // @ts-nocheck
+  import DataTable, {Head, Row, Cell, Body, Pagination} from '@smui/data-table';
+  import IconButton from '@smui/icon-button';
+  import {Label} from '@smui/common';
+  import Select, {Option} from '@smui/select';
 
-import {formatDate, formatNumber, sortBy} from '../utils.js';
+  import {formatDate, formatNumber, sortBy} from '../utils.js';
 
-export let transactions = [];
+  export let transactions = [];
 
-let rowsPerPage = 10;
-let currentPage = 0;
+  let rowsPerPage = 10;
+  let currentPage = 0;
 
-$: start = currentPage * rowsPerPage;
-$: end = Math.min(start + rowsPerPage, transactions.length);
-$: slice = transactions.slice(start, end);
-$: lastPage = Math.max(Math.ceil(transactions.length / rowsPerPage) - 1, 0);
+  $: start = currentPage * rowsPerPage;
+  $: end = Math.min(start + rowsPerPage, transactions.length);
+  $: slice = transactions.slice(start, end);
+  $: lastPage = Math.max(Math.ceil(transactions.length / rowsPerPage) - 1, 0);
 
-let sortDirection = 'descending';
-let sort = 'timeStamp';
+  let sortDirection = 'descending';
+  let sort = 'timeStamp';
 
-function handleSort() {
-  transactions = sortBy(sortDirection, sort, transactions);
-}
+  function handleSort() {
+    transactions = sortBy(sortDirection, sort, transactions);
+  }
+
+  handleSort();
 </script>
 
 <div class="max-w-280 w-full mt-6">

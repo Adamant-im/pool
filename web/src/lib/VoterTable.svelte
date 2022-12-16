@@ -30,6 +30,8 @@
   function handleSort() {
     voters = sortBy(sortDirection, sort, voters);
   }
+
+  handleSort();
 </script>
 
 <div class="max-w-280 w-full mt-6">
