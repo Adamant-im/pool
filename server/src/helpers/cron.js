@@ -3,8 +3,6 @@ import Payer from '../modules/pay_out.js';
 import config from './config/reader.js';
 import log from './log.js';
 
-const payer = new Payer();
-
 // sec(optional) min(0-59) hours(0-23) d_mon(1-31) mon(1-12/names) d_week(0-7/names)
 const patterns = {
   '1h': '0 * * * *',
@@ -33,7 +31,11 @@ export default {
     }
 
     try {
-      const payoutCronJob = new cron.CronJob(pattern, payer.payOut.bind(payer));
+      const payoutCronJob = new cron.CronJob(pattern, () => {
+        const payer = new Payer();
+
+        payer.payOut();
+      });
 
       payoutCronJob.start();
 
