@@ -7,8 +7,10 @@
 
   import {formatNumber, sortBy} from '../utils.js';
 
-  export let voters = [];
+  export let rows = [];
   export let votesWeight;
+
+  $: voters = sortBy(sortDirection, sort, rows);
 
   let rowsPerPage = 10;
   let currentPage = 0;
@@ -30,8 +32,6 @@
   function handleSort() {
     voters = sortBy(sortDirection, sort, voters);
   }
-
-  handleSort();
 </script>
 
 <div class="max-w-280 w-full mt-6">

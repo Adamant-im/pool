@@ -7,7 +7,9 @@
 
   import {formatDate, formatNumber, sortBy} from '../utils.js';
 
-  export let transactions = [];
+  export let rows = [];
+
+  $: transactions = sortBy(sortDirection, sort, rows);
 
   let rowsPerPage = 10;
   let currentPage = 0;
@@ -23,8 +25,6 @@
   function handleSort() {
     transactions = sortBy(sortDirection, sort, transactions);
   }
-
-  handleSort();
 </script>
 
 <div class="max-w-280 w-full mt-6">

@@ -84,12 +84,12 @@
   </div>
 
   <VoterTable
-    voters={voters}
+    rows={voters}
     votesWeight={store?.delegate.votesWeight}
   />
 
   <TransactionTable
-    transactions={transactions}
+    rows={transactions}
   />
 </main>
 
