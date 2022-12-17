@@ -11,16 +11,7 @@ import {
 
 class Payer {
   constructor() {
-    const {
-      totalForgedADM,
-      userRewardsADM,
-      forgedBlocks,
-    } = store.periodInfo;
-
     this.periodInfo = {
-      periodTotalForged: totalForgedADM,
-      periodUserRewards: userRewardsADM,
-      periodForgedBlocks: forgedBlocks,
       donatePaid: false,
       maintenancePaid: false,
     };
@@ -235,10 +226,10 @@ class Payer {
   async payToMaintenanceWallet() {
     try {
       const {periodInfo} = this;
-      const {periodTotalForged, periodUserRewards} = periodInfo;
+      const {totalForgedADM, userRewardsADM} = store.periodInfo;
 
-      const donateADM = (config.donate_percentage * periodTotalForged) / 100;
-      const maintenanceADM = periodTotalForged - periodUserRewards - donateADM;
+      const donateADM = (config.donate_percentage * totalForgedADM) / 100;
+      const maintenanceADM = totalForgedADM - userRewardsADM - donateADM;
 
       const payAmount = `ADM (${config.poolsShare.toFixed(2)}%) pool's share to maintenance wallet ${config.maintenancewallet}`;
       const notifyPayAmount = `${maintenanceADM.toFixed(4)} ${payAmount}`;
@@ -294,9 +285,9 @@ class Payer {
   async payDonation() {
     try {
       const {periodInfo} = this;
-      const {periodTotalForged} = periodInfo;
+      const {totalForgedADM} = store.periodInfo;
 
-      const donateADM = (config.donate_percentage * periodTotalForged) / 100;
+      const donateADM = (config.donate_percentage * totalForgedADM) / 100;
 
       const donationAmount = `ADM (${config.donate_percentage.toFixed(2)}%) donation to ${config.donatewallet}`;
       const notifyDonationAmount = `${donateADM.toFixed(4)} ${donationAmount}`;
@@ -375,11 +366,11 @@ class Payer {
 
   getBaseInfoString(balance) {
     const {pendingUserRewards, votersToReward, votersBelowMin, belowMinRewards} = this;
-    const {periodTotalForged, periodUserRewards, periodForgedBlocks} = this.periodInfo;
+    const {totalForgedADM, userRewardsADM, forgedBlocks} = store.periodInfo;
 
     let infoString = `Pending ${pendingUserRewards.toFixed(4)} ADM rewards for ${votersToReward.length} voters.`;
     infoString += `\n${votersBelowMin.length} voters forged less, than minimum ${config.minpayout} ADM, their pending rewards are ${belowMinRewards.toFixed(4)} ADM.`;
-    infoString += `\nThis period the pool forged ${periodTotalForged.toFixed(4)} ADM from ${periodForgedBlocks} blocks; ${periodUserRewards.toFixed(4)} ADM distributed to users.`;
+    infoString += `\nThis period the pool forged ${totalForgedADM.toFixed(4)} ADM from ${forgedBlocks} blocks; ${userRewardsADM.toFixed(4)} ADM distributed to users.`;
     infoString += `\nThe pool's balance — ${balance.toFixed(4)} ADM.`;
 
     return infoString;
