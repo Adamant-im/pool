@@ -44,6 +44,5 @@ async function initDelegate() {
       'info',
   );
 
-  store.updateBalance();
-  store.updateStats();
+  store.updateAll();
 }

@@ -30,6 +30,17 @@ const store = {
     pendingRewardsADM: 0,
   },
 
+  updateAll() {
+    const updates = [
+      this.updateDelegate(),
+      this.updateVoters(),
+      this.updateBalance(),
+      this.updateStats(),
+    ];
+
+    return Promise.all(updates);
+  },
+
   async updateStats() {
     try {
       const delegateForgedInfo = await api.get('delegates/forging/getForgedByAccount', {
@@ -201,12 +212,7 @@ const store = {
 };
 
 if (process.env.NODE_ENV !== 'test') {
-  setInterval(() => {
-    store.updateDelegate();
-    store.updateVoters();
-    store.updateBalance();
-    store.updateStats();
-  }, UPDATE_DELEGATE_INTERVAL);
+  setInterval(() => store.updateAll(), UPDATE_DELEGATE_INTERVAL);
 }
 
 export default store;
