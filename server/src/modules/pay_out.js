@@ -65,7 +65,7 @@ class Payer {
     if (payedCount === votersToReward.length) {
       maintenanceString = await this.payToMaintenanceWallet();
 
-      if (config.donatewallet && config.donate_percentage && periodInfo.donatePaid) {
+      if (config.donatewallet && config.donate_percentage && !periodInfo.donatePaid) {
         donateString = await this.payDonation();
       }
     }
