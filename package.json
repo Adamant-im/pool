@@ -24,9 +24,9 @@
   "author": "ADAMANT Tech Labs <devs@adamant.im>",
   "license": "GPL-3.0",
   "devDependencies": {
-    "@commitlint/cli": "^17.3.0",
-    "@commitlint/config-conventional": "^17.3.0",
-    "husky": "^8.0.2"
+    "@commitlint/cli": "^17.4.0",
+    "@commitlint/config-conventional": "^17.4.0",
+    "husky": "^8.0.3"
   },
 	"repository": {
 		"type": "git",
