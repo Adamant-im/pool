@@ -88,9 +88,6 @@ class Payer {
         `of ${payedCount} payouts, ${payedUserRewards.toFixed(4)} ADM plus ` +
         `${paymentFees.toFixed(1)} ADM fees in total.`
       );
-
-      payoutInfoString += maintenanceString;
-      payoutInfoString += donateString;
     } else {
       payoutInfoString += (
         `only ${payedCount} of ${votersToReward.length} payouts, ` +
@@ -110,6 +107,9 @@ class Payer {
 
       payoutInfoString += ` You better do these updates in database manually. Check log file for details.`;
     }
+
+    payoutInfoString += maintenanceString;
+    payoutInfoString += donateString;
 
     payoutInfoString += `\nThe pool's balance — ${balance.toFixed(4)} ADM.`;
 
