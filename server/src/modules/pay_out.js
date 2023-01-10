@@ -123,6 +123,10 @@ class Payer {
 
     if (isEveryVoterRewarded) {
       this.retryNo = 0;
+      this.periodInfo = {
+        donatePaid: false,
+        maintenancePaid: false,
+      };
     } else {
       this.retry();
     }
