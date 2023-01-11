@@ -35,7 +35,7 @@ const dbFiles = [
   {
     fileName: 'transactions',
     dbApi: dbTrans,
-    uniqueKey: 'id'
+    uniqueKey: 'transactionId'
   },
   {
     fileName: 'voters',
@@ -71,7 +71,7 @@ for (const {fileName, dbApi, uniqueKey} of dbFiles) {
     });
 
     if (savedValue) {
-      console.log(`⚪️ Value with ${valueToMigrate[uniqueKey]} ${uniqueKey} already exists in ${fileName}, skipping.`);
+      console.log(`⚪️ Value with "${valueToMigrate[uniqueKey]}" ${uniqueKey} already exists in ${fileName}, skipping.`);
       continue;
     }
 
