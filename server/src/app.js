@@ -1,7 +1,7 @@
 import store from './modules/store.js';
 import blocksChecker from './modules/blocks_checker.js';
 
-import {notifier, config, log} from './helpers/index.js';
+import {notifier, config, log, api} from './helpers/index.js';
 import cron from './helpers/cron.js';
 
 import server from './server/index.js';
@@ -19,10 +19,11 @@ server.listen(config.port, () => (
 ));
 
 // Wait for first API health check
-setTimeout(async () => {
+api.setStartupCallback(async () => {
   await initDelegate();
+
   blocksChecker();
-}, 5000 / 1000);
+});
 
 async function initDelegate() {
   const pool = await store.updateDelegate();
@@ -44,6 +45,5 @@ async function initDelegate() {
       'info',
   );
 
-  store.updateBalance();
-  store.updateStats();
+  store.updateAll();
 }

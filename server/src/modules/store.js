@@ -1,6 +1,6 @@
 import {api, utils, config, log} from '../helpers/index.js';
 import {dbVoters, dbTrans, dbBlocks} from '../helpers/DB.js';
-import {UPDATE_DELEGATE_INTERVAL} from '../helpers/const.js';
+import {UPDATE_DELEGATE_INTERVAL, SAT} from '../helpers/const.js';
 
 const store = {
   isDistributingRewards: false,
@@ -28,6 +28,17 @@ const store = {
     approval: 0,
     productivity: 0,
     pendingRewardsADM: 0,
+  },
+
+  updateAll() {
+    const updates = [
+      this.updateDelegate(),
+      this.updateVoters(),
+      this.updateBalance(),
+      this.updateStats(),
+    ];
+
+    return Promise.all(updates);
   },
 
   async updateStats() {
@@ -99,7 +110,7 @@ const store = {
 
       if (periodBlocks) {
         const totalForgedSats = periodBlocks.reduce((sum, block) => sum + (+block.totalForged), 0);
-        const totalForgedADM = utils.satsToADM(totalForgedSats);
+        const totalForgedADM = totalForgedSats / SAT;
         const userRewardsADM = periodBlocks.reduce((sum, block) => (
           sum + (block.rewardsADM ? +block.rewardsADM : 0)
         ), 0);
@@ -201,12 +212,7 @@ const store = {
 };
 
 if (process.env.NODE_ENV !== 'test') {
-  setInterval(() => {
-    store.updateDelegate();
-    store.updateVoters();
-    store.updateBalance();
-    store.updateStats();
-  }, UPDATE_DELEGATE_INTERVAL);
+  setInterval(() => store.updateAll(), UPDATE_DELEGATE_INTERVAL);
 }
 
 export default store;

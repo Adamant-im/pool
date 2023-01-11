@@ -29,6 +29,7 @@
       href={link.url}
       title={link.title}
       target="_blank"
+      rel="noreferrer"
     >
       {link.text}
     </a>
