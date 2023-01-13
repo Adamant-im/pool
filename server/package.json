@@ -8,7 +8,7 @@
 		"test": "NODE_OPTIONS=--experimental-vm-modules jest --detectOpenHandles --silent"
 	},
 	"dependencies": {
-		"adamant-api": "^1.7.0",
+		"adamant-api": "^1.8.0",
 		"axios": "^1.2.2",
 		"cors": "^2.8.5",
 		"cron": "^2.2.0",
