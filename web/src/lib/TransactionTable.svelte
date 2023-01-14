@@ -60,7 +60,10 @@
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
         <Cell
-          class={sort==='timeStamp' && sortDirection==='descending'?'mdc-data-table__header-cell--sorted-descending':''}
+          class={
+            sort==='timeStamp' && sortDirection==='descending' ?
+              'mdc-data-table__header-cell--sorted-descending' : ''
+          }
           style="text-align: right;"
           columnId="timeStamp"
         >
