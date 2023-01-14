@@ -1,6 +1,6 @@
 {
   "name": "adamant-pool",
-  "version": "1.0.0",
+  "version": "3.0.0",
   "description": "ADAMANT Forging Pool",
   "main": "server/src/app.js",
   "scripts": {
@@ -9,14 +9,31 @@
     "postinstall": "npm --prefix ./server install && npm --prefix ./web install",
     "build:web": "npm --prefix ./web run build"
   },
-  "keywords": [
-    "ADAMANT"
-  ],
+	"keywords": [
+		"forging",
+		"pool",
+		"mining",
+		"rewards",
+		"dpos",
+		"adm",
+		"adamant",
+		"blockchain",
+		"crypto",
+		"cryptocurrency"
+	],
   "author": "ADAMANT Tech Labs <devs@adamant.im>",
   "license": "GPL-3.0",
   "devDependencies": {
-    "@commitlint/cli": "^17.1.2",
-    "@commitlint/config-conventional": "^17.1.0",
-    "husky": "^8.0.1"
-  }
+    "@commitlint/cli": "^17.4.2",
+    "@commitlint/config-conventional": "^17.4.2",
+    "husky": "^8.0.3"
+  },
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Adamant-im/pool.git"
+	},
+	"bugs": {
+		"url": "https://github.com/Adamant-im/pool/issues"
+	},
+	"homepage": "https://github.com/Adamant-im/pool#readme"
 }

@@ -1,4 +1,8 @@
-> Read more about [Forging, delegates, Fair dPoS, and how to run your Forging pool](https://medium.com/adamant-im/earning-money-on-adm-forging-4c7b6eb15516).
+# ADAMANT Forging Pool
+
+> Read more about [Forging, delegates, Fair dPoS, and how to run your Forging pool](https://medium.com/adamant-im/earning-money-on-adm-forging-4c7b6eb15516)
+
+> This software is a successor of outdated [v2 Forging pool](https://github.com/Adamant-im/adamant-pool)
 
 <br>
 
@@ -33,13 +37,13 @@
 Clone the repository with pool into a newly created directory:
 
 ```
-git clone https://github.com/Adamant-im/adamant-pool
+git clone https://github.com/Adamant-im/pool
 ```
 
 Move to directory with the cloned repository:
 
 ```
-cd adamant-pool
+cd pool
 ```
 
 Install dependencies using npm or any other package manager:
@@ -70,6 +74,15 @@ nano config.jsonc
 
 > See comments in `config.default.jsonc` for more parameters.
 
+### Migration from v2
+
+To migrate a database from v2 run the migration script with the specified path to the target pool or database:
+
+```sh
+# or ~/adamant-pool/db
+$ node scripts/migrate.mjs ~/adamant-pool
+```
+
 ## Launching
 
 You can start the pool using `npm` command:
@@ -81,7 +94,7 @@ npm run start
 but we recommend to use a process manager to start the pool, f.e. [`pm2`](https://pm2.keymetrics.io/):
 
 ```
-pm2 start npm --name "ADAMANT Pool" -- start
+pm2 start ./scripts/start.sh --name "adamantpool"
 ```
 
 ## Add pool to cron
@@ -95,7 +108,7 @@ crontab -e
 and paste the string:
 
 ```
-@reboot cd /home/adamant/adamant-pool && pm2 start npm --name "ADAMANT Pool" -- start
+@reboot cd /home/adamant/pool && pm2 start /home/adamant/pool/scripts/start.sh --name "adamantpool"
 ```
 
 ## Contribution

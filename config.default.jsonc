@@ -1,67 +1,78 @@
 {
-    /** List of nodes to fetch forging information, needed to count rewards.
-        If one become unavailable, pool will choose live one.
-      **/
-    "node_ADM": [
-        "https://endless.adamant.im",
-        "https://clown.adamant.im",
-        "http://23.226.231.225:36666",
-        "http://88.198.156.44:36666",
-        "https://lake.adamant.im",
-        "http://localhost:36666"
-    ],
+  /**
+    List of nodes to fetch forging information.
+    If one become unavailable, a pool will choose live one.
+  **/
+  "node_ADM": [
+    "https://bid.adamant.im",
+    "http://localhost:36666",
+    "https://endless.adamant.im",
+    "https://clown.adamant.im",
+    "https://unusual.adamant.im",
+    "https://debate.adamant.im",
+    "http://23.226.231.225:36666",
+    "http://78.47.205.206:36666",
+    "https://lake.adamant.im",
+    "https://sunshine.adamant.im"
+  ],
 
-    /** The pool's secret phrase. Pool's ADM address will correspond this passPhrase.
-      Must be a delegate of ADAMANT blockchain.
-      **/
-    "passPhrase": "",
+  /**
+    The pool's secret phrase. Pool's ADM address/account will correspond this passPhrase.
+    The account should be a delegate of the ADAMANT blockchain.
+  **/
+  "passPhrase": "",
 
-    /** Percentage of rewards to distribute to pool's voters **/
-    "reward_percentage": 80,
+  /** Percentage of rewards to distribute to voters **/
+  "reward_percentage": 80,
 
-    /** Percentage of rewards to donate to ADAMANT Foundation **/
-    "donate_percentage": 0,
+  /** Percentage of rewards to donate to the ADAMANT Foundation **/
+  "donate_percentage": 0,
 
-    /** Wallet for donation.
-        Make sure it is the same as on https://adamant.im/donate
-      **/
-    "donatewallet": "U380651761819723095",
+  /**
+    Wallet for donation.
+    Make sure it's the same as on https://adamant.im/donate
+  **/
+  "donatewallet": "U380651761819723095",
 
-    /** Maintenance wallet to receive (100 - reward_percentage - donate_percentage) rewards
-        If you wish to leave it on the pool's wallet, set to empty string
-      **/
-    "maintenancewallet": "",
+  /**
+    Maintenance wallet to receive (100 - reward_percentage - donate_percentage) rewards.
+    If you wish to leave it on the pool's wallet, set to empty string.
+  **/
+  "maintenancewallet": "",
 
-    /** How often pool will do payouts. All at 00:00.
-        1d -> every day
-        5d -> days 1, 5, 10, 15, 20, 25 of the month
-        10d -> days 1, 10, 20 of the month
-        15d -> days 1, 15 of the month
-        30d -> 30th of each month
-        Mon, Tue, Wed, Thu, Fri, Sat or Sun -> every week
-      **/
-    "payoutperiod": "Sun",
+  /** 
+    How often the pool will do payouts. All at 00:00.
+    1d -> every day
+    5d -> days 1, 5, 10, 15, 20, 25 of the month
+    10d -> days 1, 10, 20 of the month
+    15d -> days 1, 15 of the month
+    30d -> 30th of each month
+    Mon, Tue, Wed, Thu, Fri, Sat or Sun -> every week
+  **/
+  "payoutperiod": "Sun",
 
-    /** Minimum amount in ADM for payouts. Must be not less, than 0.51.
-    	If at the end of payoutperiod a voter's reward is less than minpayout, it will be pending for next period.
-      Voter pays a transaction fee.
-      **/
-    "minpayout": 10,
+  /**
+    Minimum amount in ADM for a payout. Must be not less, than 0.51.
+    If at the end of a payoutperiod a voter's reward is less than minpayout, it will be pending for the next period.
+    Voter pays a transaction fee.
+  **/
+  "minpayout": 10,
 
-    /** If delegate can vote for himself and this will count in rewards distribution **/
-    "considerownvote": false,
+  /** If delegate can vote for himself and this will account in reward distribution **/
+  "considerownvote": false,
 
-    /** ADAMANT address for monitoring notifications **/
-    "adamant_notify": "",
+  /** ADAMANT address for monitoring notifications **/
+  "adamant_notify": "",
 
-    /** Slack key for monitoring notifications **/
-    "slack": "",
+  /** Slack key for monitoring notifications **/
+  "slack": "",
 
-    /** The software will use verbosity according to log_level.
-    	It can be none < error < warn < info < log.
-      **/
-    "log_level": "log",
+  /**
+    The software will use verbosity according to log_level.
+    It can be none < error < warn < info < log.
+  **/
+  "log_level": "log",
 
-    /** Port for pool's public Web panel **/
-    "port": 36667
+  /** Port for pool's public Web panel **/
+  "port": 36667
 }

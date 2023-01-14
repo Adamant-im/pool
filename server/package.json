@@ -1,50 +1,25 @@
 {
-	"name": "adamant-pool",
-	"version": "2.0.3",
-	"description": "Forging Pool for ADAMANT blockchain",
 	"main": "src/app.js",
 	"type": "module",
 	"scripts": {
 		"start": "node src/app.js",
 		"lint": "eslint .",
 		"lint:fix": "eslint --fix .",
-		"test": "NODE_OPTIONS=--experimental-vm-modules jest --detectOpenHandles"
+		"test": "NODE_OPTIONS=--experimental-vm-modules jest --detectOpenHandles --silent"
 	},
-	"author": "ADAMANT Tech Labs <devs@adamant.im>",
-	"license": "GPL-3.0",
 	"dependencies": {
-		"adamant-api": "^1.5.0",
-		"axios": "^0.27.2",
+		"adamant-api": "^1.8.0",
+		"axios": "^1.2.2",
 		"cors": "^2.8.5",
-		"cron": "^2.1.0",
-		"eslint-plugin-jest": "^27.0.1",
-		"express": "^4.18.1",
+		"cron": "^2.2.0",
+		"eslint-plugin-jest": "^27.2.1",
+		"express": "^4.18.2",
 		"jsonminify": "^0.4.2",
-		"lowdb": "^3.0.0"
+		"lowdb": "^5.0.5"
 	},
-	"keywords": [
-		"forging",
-		"pool",
-		"mining",
-		"rewards",
-		"dpos",
-		"adm",
-		"adamant",
-		"blockchain",
-		"crypto",
-		"cryptocurrency"
-	],
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/Adamant-im/adamant-pool.git"
-	},
-	"bugs": {
-		"url": "https://github.com/Adamant-im/adamant-pool/issues"
-	},
-	"homepage": "https://github.com/Adamant-im/adamant-pool#readme",
 	"devDependencies": {
-		"eslint": "^8.22.0",
+		"eslint": "^8.31.0",
 		"eslint-config-google": "^0.14.0",
-		"jest": "^29.1.2"
+		"jest": "^29.3.1"
 	}
 }

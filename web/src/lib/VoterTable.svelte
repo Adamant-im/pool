@@ -7,9 +7,10 @@
 
   import {formatNumber, sortBy} from '../utils.js';
 
-  export let voters = [];
+  export let rows = [];
   export let votesWeight;
-  export let votersApi = '';
+
+  $: voters = sortBy(sortDirection, sort, rows);
 
   let rowsPerPage = 10;
   let currentPage = 0;
@@ -19,8 +20,8 @@
   $: slice = voters.slice(start, end);
   $: lastPage = Math.max(Math.ceil(voters.length / rowsPerPage) - 1, 0);
 
-  let sortDirection = 'ascending';
-  let sort = 'id';
+  let sortDirection = 'descending';
+  let sort = 'pending';
 
   function calcWeightPercent(weightADM) {
     const weightPercent = weightADM / votesWeight * 10000000000;
@@ -29,17 +30,7 @@
   }
 
   function handleSort() {
-    voters.sort((a, b) => {
-      const [aVal, bVal] = [a[sort], b[sort]][
-        sortDirection === 'ascending' ? 'slice' : 'reverse'
-      ]();
-
-      if (typeof aVal === 'string' && typeof bVal === 'string') {
-        return aVal.localeCompare(bVal);
-      }
-      return Number(aVal) - Number(bVal);
-    });
-    voters = voters;
+    voters = sortBy(sortDirection, sort, voters);
   }
 </script>
 
@@ -50,7 +41,7 @@
       {voters.length}
     </span>
   </div>
-    <DataTable
+  <DataTable
     sortable
     bind:sort={sort}
     bind:sortDirection={sortDirection}
@@ -67,23 +58,29 @@
           <Label>Address</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
-        <Cell columnId="transactionId">
+        <Cell
+          columnId="pending"
+          class={
+            sort==='pending' && sortDirection==='descending' ?
+              'mdc-data-table__header-cell--sorted-descending' : ''
+          }
+        >
           <Label>Pending</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
-        <Cell columnId="payoutcount">
+        <Cell columnId="received">
           <Label>Received</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
-        <Cell columnId="payoutcount">
+        <Cell columnId="balanceADM">
           <Label>Balance</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
-        <Cell columnId="payoutcount">
+        <Cell columnId="votesCount">
           <Label>Votes</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
-        <Cell columnId="payoutcount">
+        <Cell columnId="weightADM">
           <Label>Weight</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
@@ -96,27 +93,19 @@
     <Body>
       {#each slice as voter, index}
         <Row>
-          <Cell numeric>{index + 1 + currentPage * rowsPerPage}</Cell>
-          <Cell>{voter.address}</Cell>
-          <Cell>{formatNumber(voter.pending)}</Cell>
-          <Cell>{formatNumber(voter.received)}</Cell>
-          <Cell>
-            {votersApi.includes(voter.address) && voter.balanceADM ? formatNumber(voter.balanceADM) : '—'}
-          </Cell>
-          <Cell>
-            {votersApi.includes(voter.address) && voter.votesCount ? formatNumber(voter.votesCount) : '—'}
-          </Cell>
-          <Cell>
-            {votersApi.includes(voter.address) && voter.weightADM ? formatNumber(voter.weightADM) : '—'}
-          </Cell>
-          <Cell>
-            {votersApi.includes(voter.address) && votesWeight && voter.weightADM ? calcWeightPercent(voter.weightADM) : '—'}
-          </Cell>
+          <Cell numeric>{ index + 1 + currentPage * rowsPerPage }</Cell>
+          <Cell>{ voter.address }</Cell>
+          <Cell>{ voter.pending ? formatNumber(voter.pending) : '—' }</Cell>
+          <Cell>{ voter.received ? formatNumber(voter.received) : '—' }</Cell>
+          <Cell>{ voter.balanceADM ? formatNumber(voter.balanceADM) : '—' }</Cell>
+          <Cell>{ voter.votesCount ? formatNumber(voter.votesCount) : '—' }</Cell>
+          <Cell>{ voter.weightADM ? formatNumber(voter.weightADM) : '—' }</Cell>
+          <Cell>{ votesWeight && voter.weightADM ? calcWeightPercent(voter.weightADM) : '—' }</Cell>
         </Row>
       {/each}
     </Body>
 
-    <Pagination slot="paginate">
+    <Pagination slot="paginate" class="flex-wrap">
       <svelte:fragment slot="rowsPerPage">
         <Label>Rows Per Page</Label>
         <Select variant="outlined" bind:value={rowsPerPage} noLabel>

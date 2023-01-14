@@ -38,6 +38,10 @@
   --mdc-theme-text-icon-on-dark: rgba(255, 255, 255, 0.5);
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   background: repeating-linear-gradient(140deg,#191919,#191919 .7px,#212121 0,#212121 5px);
   color: #ffffff;

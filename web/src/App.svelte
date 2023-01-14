@@ -17,8 +17,6 @@
   let voters = [];
   let store; let system;
 
-  $: votersApi = store?.delegate.voters.map((delegate) => delegate.address).join(',');
-
   let isUpdating = false;
 
   const updateAll = async () => {
@@ -31,12 +29,21 @@
         store,
         system,
       ] = await getAll();
+
+      // merge and remove duplicates
+      voters = voters.concat(
+          store.delegate.voters.filter((storeVoter) => (
+            !voters.find((dbVoter) => storeVoter.address === dbVoter.address)
+          )),
+      );
     } finally {
       setTimeout(() => (isUpdating = false), 1000);
     }
   };
 
   updateAll();
+
+  setInterval(() => updateAll(), 60 * 1000);
 </script>
 
 <TheHeader version={system?.version}/>
@@ -59,8 +66,14 @@
     </div>
 
     <p class="mt-4">
-      Delegate "{store?.delegate.username}" distributes {system?.reward_percentage}% rewards to
-      voters {system?.donate_percentage ? `and donates ${system?.donate_percentage}` : '' } with
+      Delegate
+      <b class="underline decoration-dotted">
+        <a href={`https://explorer.adamant.im/delegate/${store?.delegate.address}`} target="_blank" rel="noreferrer">
+          {store?.delegate.username}
+        </a>
+      </b>
+      distributes {system?.reward_percentage}% rewards to
+      voters {system?.donate_percentage ? `and donates ${system?.donate_percentage}% to ADAMANT Foundation` : '' } with
       payouts every {system?.payoutperiod}. Minimum payout is {system?.minpayout} ADM.
     </p>
 
@@ -71,13 +84,12 @@
   </div>
 
   <VoterTable
-    voters={voters}
+    rows={voters}
     votesWeight={store?.delegate.votesWeight}
-    votersApi={votersApi}
   />
 
   <TransactionTable
-    transactions={transactions}
+    rows={transactions}
   />
 </main>
 

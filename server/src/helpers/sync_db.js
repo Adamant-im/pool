@@ -1,3 +1,5 @@
+import log from './log.js';
+
 const getFilter = (query = {}) => {
   const queryType = typeof query;
 
@@ -36,6 +38,8 @@ export default (db, updateInterval) => {
 
       return data;
     } catch (error) {
+      log.warn(error);
+
       return false;
     }
   };
@@ -52,6 +56,8 @@ export default (db, updateInterval) => {
 
       return value;
     } catch (error) {
+      log.warn(error);
+
       return false;
     }
   };
@@ -68,6 +74,8 @@ export default (db, updateInterval) => {
 
       return value;
     } catch (error) {
+      log.warn(error);
+
       return false;
     }
   };
@@ -97,6 +105,8 @@ export default (db, updateInterval) => {
 
       return values[index];
     } catch (error) {
+      log.warn(error);
+
       return false;
     }
   };

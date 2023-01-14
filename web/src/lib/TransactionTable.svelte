@@ -1,28 +1,30 @@
 <script>
-// @ts-nocheck
-import DataTable, {Head, Row, Cell, Body, Pagination} from '@smui/data-table';
-import IconButton from '@smui/icon-button';
-import {Label} from '@smui/common';
-import Select, {Option} from '@smui/select';
+  // @ts-nocheck
+  import DataTable, {Head, Row, Cell, Body, Pagination} from '@smui/data-table';
+  import IconButton from '@smui/icon-button';
+  import {Label} from '@smui/common';
+  import Select, {Option} from '@smui/select';
 
-import {formatDate, formatNumber, sortBy} from '../utils.js';
+  import {formatDate, formatNumber, sortBy} from '../utils.js';
 
-export let transactions = [];
+  export let rows = [];
 
-let rowsPerPage = 10;
-let currentPage = 0;
+  $: transactions = sortBy(sortDirection, sort, rows);
 
-$: start = currentPage * rowsPerPage;
-$: end = Math.min(start + rowsPerPage, transactions.length);
-$: slice = transactions.slice(start, end);
-$: lastPage = Math.max(Math.ceil(transactions.length / rowsPerPage) - 1, 0);
+  let rowsPerPage = 10;
+  let currentPage = 0;
 
-let sortDirection = 'ascending';
-let sort = 'id';
+  $: start = currentPage * rowsPerPage;
+  $: end = Math.min(start + rowsPerPage, transactions.length);
+  $: slice = transactions.slice(start, end);
+  $: lastPage = Math.max(Math.ceil(transactions.length / rowsPerPage) - 1, 0);
 
-function handleSort() {
-  transactions = sortBy(sortDirection, sort, transactions);
-}
+  let sortDirection = 'descending';
+  let sort = 'timeStamp';
+
+  function handleSort() {
+    transactions = sortBy(sortDirection, sort, transactions);
+  }
 </script>
 
 <div class="max-w-280 w-full mt-6">
@@ -57,7 +59,14 @@ function handleSort() {
           <Label>Amount</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
-        <Cell style="text-align: right;" columnId="timeStamp">
+        <Cell
+          class={
+            sort==='timeStamp' && sortDirection==='descending' ?
+              'mdc-data-table__header-cell--sorted-descending' : ''
+          }
+          style="text-align: right;"
+          columnId="timeStamp"
+        >
           <Label>Date</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
