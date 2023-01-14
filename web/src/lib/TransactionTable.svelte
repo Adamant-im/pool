@@ -59,7 +59,11 @@
           <Label>Amount</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
-        <Cell style="text-align: right;" columnId="timeStamp">
+        <Cell
+          class={sort==='timeStamp' && sortDirection==='descending'?'mdc-data-table__header-cell--sorted-descending':''}
+          style="text-align: right;"
+          columnId="timeStamp"
+        >
           <Label>Date</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>

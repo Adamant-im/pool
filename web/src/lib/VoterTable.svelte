@@ -58,7 +58,13 @@
           <Label>Address</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
-        <Cell columnId="pending">
+        <Cell
+          columnId="pending"
+          class={
+            sort==='pending' && sortDirection==='descending' ?
+              'mdc-data-table__header-cell--sorted-descending' : ''
+          }
+        >
           <Label>Pending</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
