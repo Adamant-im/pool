@@ -76,8 +76,26 @@
       {#each slice as item, index}
         <Row>
           <Cell numeric>{index + 1 + currentPage * rowsPerPage}</Cell>
-          <Cell>{item.address}</Cell>
-          <Cell>{item.transactionId}</Cell>
+          <Cell>
+            <a
+                    href={`https://explorer.adamant.im/address/${item.address}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Address details"
+            >
+              { item.address }
+            </a>
+          </Cell>
+          <Cell>
+            <a
+                    href={`https://explorer.adamant.im/tx/${item.transactionId}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Transaction details"
+            >
+              { item.transactionId }
+            </a>
+          </Cell>
           <Cell>{formatNumber(item.payoutcount)}</Cell>
           <Cell>{formatDate(item.timeStamp)?.YYYY_MM_DD_hh_mm}</Cell>
         </Row>
