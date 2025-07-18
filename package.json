@@ -1,14 +1,14 @@
 {
-  "name": "adamant-pool",
-  "version": "3.0.0",
-  "description": "ADAMANT Forging Pool",
-  "main": "server/src/app.js",
-  "scripts": {
-    "start": "node .",
-    "prepare": "husky install",
-    "postinstall": "npm --prefix ./server install && npm --prefix ./web install",
-    "build:web": "npm --prefix ./web run build"
-  },
+	"name": "adamant-pool",
+	"version": "3.0.0",
+	"description": "ADAMANT Forging Pool",
+	"main": "server/src/app.js",
+	"scripts": {
+		"start": "node .",
+		"prepare": "husky",
+		"postinstall": "npm --prefix ./server install && npm --prefix ./web install",
+		"build:web": "npm --prefix ./web run build"
+	},
 	"keywords": [
 		"forging",
 		"pool",
@@ -21,13 +21,13 @@
 		"crypto",
 		"cryptocurrency"
 	],
-  "author": "ADAMANT Tech Labs <devs@adamant.im>",
-  "license": "GPL-3.0",
-  "devDependencies": {
-    "@commitlint/cli": "^19.8.1",
-    "@commitlint/config-conventional": "^19.8.1",
-    "husky": "^9.1.7"
-  },
+	"author": "ADAMANT Tech Labs <devs@adamant.im>",
+	"license": "GPL-3.0",
+	"devDependencies": {
+		"@commitlint/cli": "^19.8.1",
+		"@commitlint/config-conventional": "^19.8.1",
+		"husky": "^9.1.7"
+	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/Adamant-im/pool.git"
