@@ -26,21 +26,21 @@ app.use('/', express.static(publicDir));
 
 app.get('/', (req, res) => res.sendFile(join(publicDir, 'index.html')));
 
-app.get('/api/get-transactions', async (req, res) => {
+app.get('/api/transactions', async (req, res) => {
   const transactions = await dbTrans.find({});
 
   return res.send(transactions);
 });
 
-app.get('/api/get-voters', async (req, res) => {
+app.get('/api/voters', async (req, res) => {
   const voters = await dbVoters.find({});
 
   return res.send(voters);
 });
 
-app.get('/api/get-delegate', async (req, res) => res.send(store));
+app.get('/api/delegate', async (req, res) => res.send(store));
 
-app.get('/api/get-config', async (req, res) => res.send({
+app.get('/api/config', async (req, res) => res.send({
   version: config.version,
   reward_percentage: config.reward_percentage,
   donate_percentage: config.donate_percentage,

@@ -16,9 +16,9 @@ export const request = (methodName) => {
 
 export function getAll() {
   return Promise.all([
-    request('get-voters'),
-    request('get-transactions'),
-    request('get-delegate'),
-    request('get-config'),
+    request('voters'),
+    request('transactions'),
+    request('delegate'),
+    request('config'),
   ]);
 }
