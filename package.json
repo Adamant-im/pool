@@ -6,6 +6,7 @@
 	"scripts": {
 		"start": "node .",
 		"prepare": "husky",
+		"test": "echo \"No tests implemented\"",
 		"postinstall": "npm --prefix ./server install && npm --prefix ./web install",
 		"build:web": "npm --prefix ./web run build"
 	},
