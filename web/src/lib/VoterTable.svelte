@@ -5,7 +5,7 @@
   import {Label} from '@smui/common';
   import Select, {Option} from '@smui/select';
 
-  import {formatNumber, sortBy} from '../utils.js';
+  import {formatNumber, splitWholeDecimalNumberParts, sortBy} from '../utils.js';
 
   export let rows = [];
   export let votesWeight;
@@ -33,6 +33,12 @@
     voters = sortBy(sortDirection, sort, voters);
   }
 </script>
+
+<style>
+  .bold-white {
+    font-weight: bold;
+  }
+</style>
 
 <div class="max-w-280 w-full mt-6">
   <div class="text-xl flex gap-2 items-end mb-4">
@@ -104,12 +110,78 @@
               { voter.address }
             </a>
           </Cell>
-          <Cell>{ voter.pending ? formatNumber(voter.pending) : '—' }</Cell>
-          <Cell>{ voter.received ? formatNumber(voter.received) : '—' }</Cell>
-          <Cell>{ voter.balanceADM ? formatNumber(voter.balanceADM) : '—' }</Cell>
-          <Cell>{ voter.votesCount ? formatNumber(voter.votesCount) : '—' }</Cell>
-          <Cell>{ voter.weightADM ? formatNumber(voter.weightADM) : '—' }</Cell>
-          <Cell>{ votesWeight && voter.weightADM ? calcWeightPercent(voter.weightADM) : '—' }</Cell>
+          <Cell numeric>
+            {#if voter.pending}
+              {@const formatted = splitWholeDecimalNumberParts(formatNumber(voter.pending))}
+              {#if formatted.decimal}
+                <span class="bold-white">{formatted.whole}</span><span>{formatted.decimal}</span>
+              {:else}
+                  <span class="bold-white">{formatted.whole}</span>
+              {/if}
+            {:else}
+              -
+            {/if}
+          </Cell>
+          <Cell numeric>
+            {#if voter.received}
+              {@const formatted = splitWholeDecimalNumberParts(formatNumber(voter.received))}
+              {#if formatted.decimal}
+                <span class="bold-white">{formatted.whole}</span><span>{formatted.decimal}</span>
+              {:else}
+                <span class="bold-white">{formatted.whole}</span>
+              {/if}
+            {:else}
+              -
+            {/if}
+          </Cell>
+          <Cell numeric>
+            {#if voter.balanceADM}
+              {@const formatted = splitWholeDecimalNumberParts(formatNumber(voter.balanceADM))}
+              {#if formatted.decimal}
+                  <span class="bold-white">{formatted.whole}</span><span>{formatted.decimal}</span>
+              {:else}
+                  <span class="bold-white">{formatted.whole}</span>
+              {/if}
+            {:else}
+              -
+            {/if}
+          </Cell>
+          <Cell numeric>
+            {#if voter.votesCount}
+              {@const formatted = splitWholeDecimalNumberParts(formatNumber(voter.votesCount))}
+              {#if formatted.decimal}
+                <span class="bold-white">{formatted.whole}</span><span>{formatted.decimal}</span>
+              {:else}
+                  <span class="bold-white">{formatted.whole}</span>
+              {/if}
+            {:else}
+              -
+            {/if}
+          </Cell>
+          <Cell numeric>
+            {#if voter.weightADM}
+              {@const formatted = splitWholeDecimalNumberParts(formatNumber(voter.weightADM))}
+              {#if formatted.decimal}
+                <span class="bold-white">{formatted.whole}</span><span>{formatted.decimal}</span>
+              {:else}
+                  <span class="bold-white">{formatted.whole}</span>
+              {/if}
+            {:else}
+              -
+            {/if}
+          </Cell>
+          <Cell numeric>
+            {#if voter.votesWeight && voter.weightADM}
+              {@const formatted = splitWholeDecimalNumberParts(calcWeightPercent(voter.weightADM))}
+              {#if formatted.decimal}
+                <span class="bold-white">{formatted.whole}</span><span>{formatted.decimal}</span>
+              {:else}
+                  <span class="bold-white">{formatted.whole}</span>
+              {/if}
+            {:else}
+              -
+            {/if}
+          </Cell>
         </Row>
       {/each}
     </Body>
