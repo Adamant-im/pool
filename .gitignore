@@ -1,6 +1,12 @@
-node_modules
+node_modules/
+
 config.test.jsonc
 config.json
 config.jsonc
-logs
-.vscode
+
+logs/
+
+.vscode/
+.idea/
+
+.DS_Store
