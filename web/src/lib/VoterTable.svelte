@@ -94,7 +94,16 @@
       {#each slice as voter, index}
         <Row>
           <Cell numeric>{ index + 1 + currentPage * rowsPerPage }</Cell>
-          <Cell>{ voter.address }</Cell>
+          <Cell>
+            <a
+                    href={`https://explorer.adamant.im/address/${voter.address}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Address details"
+            >
+              { voter.address }
+            </a>
+          </Cell>
           <Cell>{ voter.pending ? formatNumber(voter.pending) : '—' }</Cell>
           <Cell>{ voter.received ? formatNumber(voter.received) : '—' }</Cell>
           <Cell>{ voter.balanceADM ? formatNumber(voter.balanceADM) : '—' }</Cell>
