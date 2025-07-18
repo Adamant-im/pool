@@ -8,12 +8,14 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@eslint/js": "^9.31.0",
+    "@eslint/json": "^0.13.0",
+    "@eslint/markdown": "^7.0.0",
     "@smui/button": "^6.1.4",
     "@smui/data-table": "^6.2.0",
     "@sveltejs/vite-plugin-svelte": "^2.0.2",
-    "eslint": "^8.31.0",
-    "eslint-config-google": "^0.14.0",
-    "eslint-plugin-svelte3": "^4.0.0",
+    "eslint": "^9.31.0",
+    "globals": "^16.3.0",
     "svelte": "^3.55.1",
     "vite": "^4.0.4",
     "vite-plugin-windicss": "^1.8.10",
