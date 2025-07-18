@@ -17,7 +17,7 @@
     "eslint": "^9.31.0",
     "globals": "^16.3.0",
     "svelte": "^3.55.1",
-    "vite": "^4.0.4",
+    "vite": "^7.0.5",
     "vite-plugin-windicss": "^1.9.4",
     "windicss": "^3.5.6"
   },
