@@ -16,7 +16,7 @@
 		"eslint-plugin-jest": "^29.0.1",
 		"express": "^5.1.0",
 		"jsonminify": "^0.4.2",
-		"lowdb": "^5.0.5"
+		"lowdb": "^7.0.1"
 	},
 	"devDependencies": {
 		"@eslint/json": "^0.13.0",

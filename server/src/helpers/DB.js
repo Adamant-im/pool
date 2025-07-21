@@ -18,12 +18,15 @@ const createAdapter = (fileName) => (
 
 export const dbTrans = syncDB(new Low(
     createAdapter('transactions'),
+    { values: [] }
 ));
 
 export const dbBlocks = syncDB(new Low(
     createAdapter('blocks'),
+    { values: [] }
 ));
 
 export const dbVoters = syncDB(new Low(
     createAdapter('voters'),
+    { values: [] }
 ), 60 * 1000 * 60);
