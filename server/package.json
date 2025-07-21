@@ -8,17 +8,20 @@
 		"test": "NODE_OPTIONS=--experimental-vm-modules jest --detectOpenHandles --silent"
 	},
 	"dependencies": {
+		"@jest/globals": "^30.0.4",
 		"adamant-api": "^2.4.0",
 		"axios": "^1.10.0",
 		"cors": "^2.8.5",
 		"cron": "^4.3.2",
-		"eslint-plugin-jest": "^27.2.1",
+		"eslint-plugin-jest": "^29.0.1",
 		"express": "^4.18.2",
 		"jsonminify": "^0.4.2",
 		"lowdb": "^5.0.5"
 	},
 	"devDependencies": {
-		"eslint": "^8.31.0",
+		"@eslint/json": "^0.13.0",
+		"@eslint/markdown": "^7.0.0",
+		"eslint": "^9.31.0",
 		"eslint-config-google": "^0.14.0",
 		"jest": "^30.0.4"
 	}
