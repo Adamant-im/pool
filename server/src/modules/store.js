@@ -1,6 +1,6 @@
-import {api, utils, config, log} from '../helpers/index.js';
-import {dbVoters, dbTrans, dbBlocks} from '../helpers/DB.js';
-import {UPDATE_DELEGATE_INTERVAL, SAT} from '../helpers/const.js';
+import {api, config, log, utils} from '../helpers/index.js';
+import {dbBlocks, dbTrans, dbVoters} from '../helpers/DB.js';
+import {SAT, UPDATE_DELEGATE_INTERVAL} from '../helpers/const.js';
 
 const store = {
   isDistributingRewards: false,
@@ -43,16 +43,14 @@ const store = {
 
   async updateStats() {
     try {
-      const delegateForgedInfo = await api.get('delegates/forging/getForgedByAccount', {
-        generatorPublicKey: config.publicKey,
-      });
+      const delegateForgedInfoResponse = await api.getDelegateStats(config.publicKey);
 
-      if (delegateForgedInfo.success) {
+      if (delegateForgedInfoResponse.success) {
         const {
           forged,
           rewards,
           fees,
-        } = delegateForgedInfo.data;
+        } = delegateForgedInfoResponse;
 
         this.delegate = {
           ...this.delegate,
@@ -74,7 +72,7 @@ const store = {
       } else {
         log.warn(
             `Failed to get forged info for delegate for ${config.address}. ` +
-            `${delegateForgedInfo.errorMessage}.`,
+            `${delegateForgedInfoResponse.errorMessage}.`,
         );
       }
 
@@ -133,26 +131,20 @@ const store = {
   },
 
   async updateVotes(address) {
-    const votes = await api.get('accounts/delegates', {
-      address,
-    });
+    const getVoteDataResponse = await api.getVoteData(address);
 
-    if (votes.success) {
-      const votesCount = votes.data.delegates.length;
-
-      return votesCount;
+    if (getVoteDataResponse.success) {
+      return getVoteDataResponse.delegates.length;
     } else {
-      log.warn(`Failed to get votes for ${address}. ${votes.errorMessage}.`);
+      log.warn(`Failed to get votes for ${address}. ${getVoteDataResponse.errorMessage}.`);
     }
   },
 
   async updateVoters() {
-    const voters = await api.get('delegates/voters', {
-      publicKey: config.publicKey,
-    });
+    const getVotersResponse = await api.getVoters(config.publicKey);
 
-    if (voters.success) {
-      this.delegate.voters = voters.data.accounts;
+    if (getVotersResponse.success) {
+      this.delegate.voters = getVotersResponse.accounts;
 
       for (const voter of this.delegate.voters) {
         voter.votesCount = await this.updateVotes(voter.address);
@@ -160,38 +152,38 @@ const store = {
 
       log.log(`Updated voters: ${this.delegate.voters.length} accounts`);
     } else {
-      log.warn(`Failed to get voters for ${config.address}. ${voters.errorMessage}.`);
+      log.warn(`Failed to get voters for ${config.address}. ${getVotersResponse.errorMessage}.`);
     }
   },
 
   async updateBalance() {
-    const account = await api.get('accounts', {
+    const getAccountInfoResponse = await api.getAccountInfo({
       publicKey: config.publicKey,
     });
 
-    if (account.success) {
+    if (getAccountInfoResponse.success) {
       this.delegate = {
         ...this.delegate,
-        ...account.data.account,
+        ...getAccountInfoResponse.account,
       };
 
       this.delegate.balance = +this.delegate.balance;
 
       log.log(`Updated balance: ${utils.satsToADM(this.delegate.balance)} ADM`);
     } else {
-      log.warn(`Failed to get account data for ${config.address}. ${account.errorMessage}.`);
+      log.warn(`Failed to get account data for ${config.address}. ${getAccountInfoResponse.errorMessage}.`);
     }
   },
 
   async updateDelegate() {
-    const delegate = await api.get('delegates/get', {
+    const getDelegateResponse = await api.getDelegate({
       publicKey: config.publicKey,
     });
 
-    if (delegate.success) {
+    if (getDelegateResponse.success) {
       this.delegate = {
         ...this.delegate,
-        ...delegate.data.delegate,
+        ...getDelegateResponse.delegate,
       };
       this.delegate.votesWeight = +this.delegate.votesWeight;
 
@@ -206,7 +198,7 @@ const store = {
 
       return this.delegate;
     } else {
-      log.warn(`Failed to get delegate for ${config.address}. ${delegate.errorMessage}.`);
+      log.warn(`Failed to get delegate for ${config.address}. ${getDelegateResponse.errorMessage}.`);
     }
   },
 };

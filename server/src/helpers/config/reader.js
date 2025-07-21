@@ -1,5 +1,5 @@
 import jsonminify from 'jsonminify';
-import keys from 'adamant-api/src/helpers/keys.js';
+import {createAddressFromPublicKey, createKeypairFromPassphrase} from 'adamant-api';
 import fs from 'fs';
 
 import {join, dirname} from 'path';
@@ -68,12 +68,12 @@ if (!config.passPhrase) {
 let keysPair;
 
 try {
-  keysPair = keys.createKeypairFromPassPhrase(config.passPhrase);
+  keysPair = createKeypairFromPassphrase(config.passPhrase);
 } catch (error) {
   exit('Pool\'s config is wrong. Invalid passPhrase. Cannot start Pool. Error: ', error);
 }
 
-const address = keys.createAddressFromPublicKey(keysPair.publicKey);
+const address = createAddressFromPublicKey(keysPair.publicKey);
 
 config.publicKey = keysPair.publicKey.toString('hex');
 config.address = address;
