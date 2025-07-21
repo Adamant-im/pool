@@ -11,20 +11,20 @@
     "@eslint/js": "^9.31.0",
     "@eslint/json": "^0.13.0",
     "@eslint/markdown": "^7.0.0",
-    "@smui/button": "^8.0.0",
+    "@smui/button": "^8.0.1",
     "@smui/common": "^8.0.1",
-    "@smui/data-table": "^8.0.0",
+    "@smui/data-table": "^8.0.1",
     "@smui/icon-button": "^8.0.1",
     "@smui/select": "^8.0.1",
     "@sveltejs/vite-plugin-svelte": "^6.1.0",
     "eslint": "^9.31.0",
     "globals": "^16.3.0",
-    "svelte": "^5.36.7",
+    "svelte": "^5.36.12",
     "vite": "^7.0.5",
     "vite-plugin-windicss": "^1.9.4",
     "windicss": "^3.5.6"
   },
   "dependencies": {
-    "svelte-material-ui": "^8.0.0"
+    "svelte-material-ui": "^8.0.1"
   }
 }
