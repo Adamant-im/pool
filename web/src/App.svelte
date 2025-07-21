@@ -1,4 +1,4 @@
-<script>
+<script lang="js">
   import Button from '@smui/button';
   import {Label} from '@smui/common';
 
@@ -13,11 +13,12 @@
 
   import {getAll} from './api.js';
 
-  let transactions = [];
-  let voters = [];
-  let store; let system;
+  let transactions = $state([]);
+  let voters = $state([]);
+  let store = $state();
+  let system = $state();
 
-  let isUpdating = false;
+  let isUpdating = $state(false);
 
   const updateAll = async () => {
     isUpdating = true;
@@ -55,7 +56,7 @@
         Dashboard
       </div>
 
-      <Button variant="raised" on:click={updateAll} disabled={isUpdating}>
+      <Button variant="raised" onclick={updateAll} disabled={isUpdating}>
         <Label>
           <div class="flex gap-2 items-center">
             <UpdateIcon/>
