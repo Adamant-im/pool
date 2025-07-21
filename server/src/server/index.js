@@ -17,7 +17,7 @@ const app = express();
 
 app.use(cors());
 
-app.use('*.js', (req, res, next) => {
+app.use(/\.js/, (req, res, next) => {
   res.set('Content-Type', 'text/javascript');
   next();
 });
