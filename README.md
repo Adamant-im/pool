@@ -36,25 +36,25 @@
 
 Clone the repository with pool into a newly created directory:
 
-```
+```bash
 git clone https://github.com/Adamant-im/pool
 ```
 
 Move to directory with the cloned repository:
 
-```
+```bash
 cd pool
 ```
 
 Install dependencies using npm or any other package manager:
 
-```
+```bash
 npm install
 ```
 
 Build a website:
 
-```
+```bash
 npm run build:web
 ```
 
@@ -62,13 +62,13 @@ npm run build:web
 
 Copy default config as `config.jsonc`:
 
-```
+```bash
 cp config.default.jsonc config.jsonc
 ```
 
 And edit that file by inserting the pool's secret phrase as the minimum configuration, e.g. using `nano`:
 
-```
+```bash
 nano config.jsonc
 ```
 
@@ -78,7 +78,7 @@ nano config.jsonc
 
 To migrate a database from v2 run the migration script with the specified path to the target pool or database:
 
-```sh
+```bash
 # or ~/adamant-pool/db
 $ node scripts/migrate.mjs ~/adamant-pool
 ```
@@ -89,13 +89,13 @@ In order for the changes to take effect, you will need to restart your pool.
 
 You can start the pool using `npm` command:
 
-```
+```bash
 npm run start
 ```
 
 but we recommend to use a process manager to start the pool, f.e. [`pm2`](https://pm2.keymetrics.io/):
 
-```
+```bash
 pm2 start ./scripts/start.sh --name "adamantpool"
 ```
 
@@ -103,13 +103,13 @@ pm2 start ./scripts/start.sh --name "adamantpool"
 
 Edit crontab file using the command below:
 
-```
+```bash
 crontab -e
 ```
 
 and paste the string:
 
-```
+```bash
 @reboot cd /home/adamant/pool && pm2 start /home/adamant/pool/scripts/start.sh --name "adamantpool"
 ```
 
