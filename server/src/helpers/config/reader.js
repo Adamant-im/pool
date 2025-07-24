@@ -1,6 +1,7 @@
 import jsonminify from 'jsonminify';
 import {createAddressFromPublicKey, createKeypairFromPassphrase} from 'adamant-api';
 import fs from 'fs';
+import * as process from "node:process";
 
 import {join, dirname} from 'path';
 import {fileURLToPath} from 'url';

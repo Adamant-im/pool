@@ -1,4 +1,5 @@
 import log from './log.js';
+import * as process from "node:process";
 
 const getFilter = (query = {}) => {
   const queryType = typeof query;

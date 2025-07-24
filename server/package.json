@@ -3,17 +3,15 @@
 	"type": "module",
 	"scripts": {
 		"start": "node src/app.js",
-		"lint": "eslint .",
-		"lint:fix": "eslint --fix .",
-		"test": "NODE_OPTIONS=--experimental-vm-modules jest --detectOpenHandles --silent"
+		"lint": "npx eslint .",
+		"lint:fix": "npx eslint --fix .",
+		"test": "NODE_OPTIONS=--experimental-vm-modules jest --silent --forceExit"
 	},
 	"dependencies": {
-		"@jest/globals": "^30.0.4",
 		"adamant-api": "^2.4.0",
 		"axios": "^1.10.0",
 		"cors": "^2.8.5",
 		"cron": "^4.3.2",
-		"eslint-plugin-jest": "^29.0.1",
 		"express": "^5.1.0",
 		"jsonminify": "^0.4.2",
 		"lowdb": "^7.0.1"
@@ -23,6 +21,8 @@
 		"@eslint/markdown": "^7.0.0",
 		"eslint": "^9.31.0",
 		"eslint-config-google": "^0.14.0",
-		"jest": "^30.0.4"
+		"jest": "^30.0.4",
+		"@jest/globals": "^30.0.4",
+		"eslint-plugin-jest": "^29.0.1"
 	}
 }

@@ -6,9 +6,11 @@
 	"scripts": {
 		"start": "node .",
 		"prepare": "husky",
-		"test": "echo \"No tests implemented\"",
+		"test": "npm --prefix ./server run test",
 		"postinstall": "npm --prefix ./server install && npm --prefix ./web install",
-		"build:web": "npm --prefix ./web run build"
+		"build:web": "npm --prefix ./web run build",
+		"lint": "npm --prefix ./server run lint && npm --prefix ./web run lint",
+		"lint:fix": "npm --prefix ./server run lint:fix && npm --prefix ./web run lint:fix"
 	},
 	"keywords": [
 		"forging",

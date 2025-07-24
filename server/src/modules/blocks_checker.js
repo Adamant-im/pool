@@ -2,6 +2,7 @@ import BlockParser from './block_parser.js';
 
 import {api, config, log} from '../helpers/index.js';
 import {UPDATE_BLOCKS_INTERVAL} from '../helpers/const.js';
+import * as process from "node:process";
 
 const blockParser = new BlockParser();
 

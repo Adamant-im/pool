@@ -3,6 +3,7 @@ import blocksChecker from './modules/blocks_checker.js';
 
 import {notifier, config, log, api} from './helpers/index.js';
 import cron from './helpers/cron.js';
+import * as process from "node:process";
 
 import server from './server/index.js';
 

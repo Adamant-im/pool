@@ -1,5 +1,6 @@
 import {Low, MemorySync} from 'lowdb';
 import {JSONFileSync} from 'lowdb/node';
+import * as process from "node:process";
 
 import {join, dirname} from 'path';
 import {fileURLToPath} from 'url';

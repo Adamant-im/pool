@@ -1,6 +1,7 @@
 import {api, config, log, utils} from '../helpers/index.js';
 import {dbBlocks, dbTrans, dbVoters} from '../helpers/DB.js';
 import {SAT, UPDATE_DELEGATE_INTERVAL} from '../helpers/const.js';
+import * as process from "node:process";
 
 const store = {
   isDistributingRewards: false,

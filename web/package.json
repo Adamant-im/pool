@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "vite",
     "lint": "npx eslint .",
+    "lint:fix": "npx eslint .",
     "build": "vite build",
     "preview": "vite preview"
   },
