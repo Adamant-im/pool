@@ -2,7 +2,6 @@ import BlockParser from './block_parser.js';
 
 import {api, config, log} from '../helpers/index.js';
 import {UPDATE_BLOCKS_INTERVAL} from '../helpers/const.js';
-import * as process from "node:process";
 
 const blockParser = new BlockParser();
 
@@ -13,7 +12,7 @@ async function getBlocks() {
     if (getBlocksResponse.success) {
       getBlocksResponse.blocks.forEach((block) => blockParser.enqueue(block));
 
-      blockParser.run();
+      await blockParser.run();
     } else {
       log.warn(`Failed to get blocks. ${getBlocksResponse.errorMessage}.`);
     }
@@ -23,8 +22,8 @@ async function getBlocks() {
 }
 
 export default () => {
-  getBlocks();
-  if (process.env.NODE_ENV !== 'test') {
-    setInterval(getBlocks, UPDATE_BLOCKS_INTERVAL);
-  }
+  // getBlocks();
+  setInterval(async () => {
+    await getBlocks();
+  }, 1000);
 };

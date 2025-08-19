@@ -48,5 +48,5 @@ async function initDelegate() {
       'info',
   );
 
-  store.updateAll();
+  await store.updateAll();
 }

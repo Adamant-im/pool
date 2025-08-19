@@ -85,7 +85,9 @@ class BlockParser {
 
       this.isLocked = false;
 
-      return this.run();
+      await this.run();
+
+      // return this.run();
     }
   }
 
@@ -94,13 +96,13 @@ class BlockParser {
 
     const savedBlock = await dbBlocks.findOne({id});
 
-    const rewardDistributer = new RewardDistributor(block);
+    const rewardDistributor = new RewardDistributor(block);
 
     if (savedBlock) {
       if (!savedBlock.processed) {
         log.info(`Re-trying to distribute rewards for block ${block.id} (height ${block.height})…`);
 
-        return rewardDistributer.distribute();
+        await rewardDistributor.distribute();
       }
     } else {
       log.info(`New block forged: ${block.id} (height ${block.height}).`);
@@ -112,7 +114,7 @@ class BlockParser {
             `Block successfully saved: ${block.id} (height ${block.height}). Distributing rewards…`,
         );
 
-        return rewardDistributer.distribute();
+        await rewardDistributor.distribute();
       } else {
         log.warn(`Failed to save block ${block.id} (height ${block.height}).`);
       }
