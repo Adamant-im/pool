@@ -25,5 +25,5 @@ export default () => {
   // getBlocks();
   setInterval(async () => {
     await getBlocks();
-  }, 1000);
+  }, UPDATE_BLOCKS_INTERVAL);
 };
