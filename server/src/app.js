@@ -5,7 +5,7 @@ import { EXIT_CODE_ERROR } from './defines.js';
 
 import blocksChecker from './modules/blocks_checker.js';
 import cron from './helpers/cron.js';
-import server from './server/index.js';
+import server from './api/index.js';
 import store from './modules/store.js';
 
 log.start();
