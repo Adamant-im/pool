@@ -55,4 +55,11 @@ export default {
     type: Boolean,
     default: false,
   },
+  cors: {
+    type: Object,
+    default: {
+      origin: '*',
+      credentials: 'true',
+    },
+  },
 };

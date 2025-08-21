@@ -1,21 +1,22 @@
+import { dirname, join } from 'path';
 import cors from 'cors';
 import express from 'express';
-
-import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-
-import store from '../modules/store.js';
 
 import { dbTrans, dbVoters } from '../helpers/DB.js';
 import config from '../helpers/config/reader.js';
+import store from '../modules/store.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
 const publicDir = join(__dirname, '../../../web/dist/');
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: config.origin,
+  credentials: config.credentials,
+  methods: ['GET'],
+}));
 
 app.use(/\.js/, (req, res, next) => {
   res.set('Content-Type', 'text/javascript');

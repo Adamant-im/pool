@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import configSchema from './schema.js';
 import validateConfig from './validate.js';
 
-import {EXIT_CODE_ERROR, MIN_PAYOUT} from '../../defines.js';
+import { EXIT_CODE_ERROR, MIN_PAYOUT } from '../../defines.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

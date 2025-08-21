@@ -40,7 +40,7 @@
   **/
   "maintenancewallet": "",
 
-  /** 
+  /**
     How often the pool will do payouts. All at 00:00.
     1d -> every day
     5d -> days 1, 5, 10, 15, 20, 25 of the month
@@ -74,5 +74,10 @@
   "log_level": "log",
 
   /** Port for pool's public Web panel **/
-  "port": 36667
+  "port": 36667,
+
+  "cors": {
+    "origin": "*",
+    "credentials": true
+  }
 }
