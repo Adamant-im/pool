@@ -1,6 +1,6 @@
 import * as process from 'node:process';
 import { SAT, UPDATE_DELEGATE_INTERVAL } from '../defines.js';
-import { api, config, log, utils } from '../helpers/index.js';
+import { adamantApiClient, config, log, utils } from '../helpers/index.js';
 import { dbBlocks, dbTrans, dbVoters } from '../helpers/DB.js';
 
 const store = {
@@ -44,7 +44,7 @@ const store = {
 
   async updateStats() {
     try {
-      const delegateForgedInfoResponse = await api.getDelegateStats(config.publicKey);
+      const delegateForgedInfoResponse = await adamantApiClient.getDelegateStats(config.publicKey);
 
       if (delegateForgedInfoResponse.success) {
         const {
@@ -77,7 +77,7 @@ const store = {
         );
       }
 
-      const cron = (await import('../helpers/cron.js')).default.payoutCronJob;
+      const cron = (await import('../cron/payout.cron.js')).payoutCron;
 
       const nextRunMoment = cron.nextDate();
 
@@ -132,7 +132,7 @@ const store = {
   },
 
   async updateVotes(address) {
-    const getVoteDataResponse = await api.getVoteData(address);
+    const getVoteDataResponse = await adamantApiClient.getVoteData(address);
 
     if (getVoteDataResponse.success) {
       return getVoteDataResponse.delegates.length;
@@ -142,7 +142,7 @@ const store = {
   },
 
   async updateVoters() {
-    const getVotersResponse = await api.getVoters(config.publicKey);
+    const getVotersResponse = await adamantApiClient.getVoters(config.publicKey);
 
     if (getVotersResponse.success) {
       this.delegate.voters = getVotersResponse.accounts;
@@ -158,7 +158,7 @@ const store = {
   },
 
   async updateBalance() {
-    const getAccountInfoResponse = await api.getAccountInfo({
+    const getAccountInfoResponse = await adamantApiClient.getAccountInfo({
       publicKey: config.publicKey,
     });
 
@@ -177,7 +177,7 @@ const store = {
   },
 
   async updateDelegate() {
-    const getDelegateResponse = await api.getDelegate({
+    const getDelegateResponse = await adamantApiClient.getDelegate({
       publicKey: config.publicKey,
     });
 

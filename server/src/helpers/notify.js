@@ -1,4 +1,4 @@
-import api from './api.js';
+import adamantApiClient from './adamantApiClient.js';
 import axios from 'axios';
 import config from './config/reader.js';
 import log from './log.js';
@@ -45,7 +45,7 @@ export default (message, type, silentMode = false) => {
       if (adamantNotify && adamantNotify.length > 5 && adamantNotify.startsWith('U') && config.passPhrase && config.passPhrase.length > 30) {
         const mdMessage = makeBoldForMarkdown(message);
 
-        api.sendMessage(config.passPhrase, adamantNotify, `${type}| ${mdMessage}`)
+        adamantApiClient.sendMessage(config.passPhrase, adamantNotify, `${type}| ${mdMessage}`)
             .then((response) => {
               if (!response.success) {
                 log.warn(`Failed to send notification messsage '${mdMessage}' to ${adamantNotify}. ${response.errorMessage}.`);

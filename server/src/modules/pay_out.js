@@ -6,7 +6,7 @@ import {
 } from '../defines.js';
 import store from './store.js';
 
-import { api, config, log, notifier } from '../helpers/index.js';
+import { adamantApiClient, config, log, notifier } from '../helpers/index.js';
 import { dbTrans, dbVoters } from '../helpers/DB.js';
 
 class Payer {
@@ -171,7 +171,7 @@ class Payer {
 
     log.log(`Processing payment of ${amount.toFixed(8)} ADM reward to ${address}…`);
 
-    const payment = await api.sendTokens(config.passPhrase, address, amount);
+    const payment = await adamantApiClient.sendTokens(config.passPhrase, address, amount);
 
     if (!payment.success) {
       return log.warn(
@@ -246,7 +246,7 @@ class Payer {
           if (maintenanceADM - FEE > 0) {
             log.log(`${logPayAmount}…`);
 
-            const paymentMaintenance = await api.sendTokens(
+            const paymentMaintenance = await adamantApiClient.sendTokens(
                 config.passPhrase,
                 config.maintenancewallet,
                 maintenanceADM - FEE,
@@ -302,7 +302,7 @@ class Payer {
       if (donateADM - FEE > 0) {
         log.log(`Processing payment of ${logDonationAmount}…`);
 
-        const paymentDonate = await api.sendTokens(
+        const paymentDonate = await adamantApiClient.sendTokens(
             config.passPhrase,
             config.donatewallet,
             donateADM - FEE,

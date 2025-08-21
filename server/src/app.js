@@ -1,18 +1,18 @@
 import * as process from 'node:process';
 
-import { api, config, log, notifier } from './helpers/index.js';
+import { adamantApiClient, config, log, notifier } from './helpers/index.js';
 import { EXIT_CODE_ERROR } from './defines.js';
+import payoutCron from './cron/payout.cron.js';
 
 import blocksChecker from './modules/blocks_checker.js';
-import cron from './helpers/cron.js';
 import server from './api/index.js';
 import store from './modules/store.js';
 
 log.start();
 
-const cronStatusCode = cron.initCron(config.payoutperiod);
-
-if (cronStatusCode === -1) {
+try {
+  payoutCron.init(config.payoutperiod);
+} catch {
   process.exit(EXIT_CODE_ERROR);
 }
 
@@ -20,10 +20,10 @@ server.listen(config.port, () => (
   log.log(`Pool ${config.address} successfully started a web server.`)
 ));
 
-if (process.env.NODE_ENV !== 'test') await api.checkNodes();
+if (process.env.NODE_ENV !== 'test') await adamantApiClient.checkNodes();
 
 // Wait for first API health check
-api.onReady(async () => {
+adamantApiClient.onReady(async () => {
   await initDelegate();
 
   blocksChecker();

@@ -1,4 +1,4 @@
-import cron from '../../src/helpers/cron.js';
+import cron from '../../src/cron/payout.cron.js';
 import utils from '../../src/helpers/utils.js';
 
 describe('Initializing a cron using the day of the week', () => {
