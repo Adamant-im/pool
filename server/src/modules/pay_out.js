@@ -3,7 +3,7 @@ import {
   RETRY_PAYOUTS_COUNT,
   RETRY_PAYOUTS_TIMEOUT,
   SAT,
-} from '../helpers/const.js';
+} from '../defines.js';
 import store from './store.js';
 
 import { api, config, log, notifier } from '../helpers/index.js';

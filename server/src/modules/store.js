@@ -1,5 +1,5 @@
 import * as process from 'node:process';
-import { SAT, UPDATE_DELEGATE_INTERVAL } from '../helpers/const.js';
+import { SAT, UPDATE_DELEGATE_INTERVAL } from '../defines.js';
 import { api, config, log, utils } from '../helpers/index.js';
 import { dbBlocks, dbTrans, dbVoters } from '../helpers/DB.js';
 

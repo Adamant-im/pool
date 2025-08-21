@@ -1,6 +1,6 @@
 import BlockParser from './block_parser.js';
 
-import { UPDATE_BLOCKS_INTERVAL } from '../helpers/const.js';
+import { UPDATE_BLOCKS_INTERVAL } from '../defines.js';
 
 import { api, config, log } from '../helpers/index.js';
 

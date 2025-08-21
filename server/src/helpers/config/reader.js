@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import configSchema from './schema.js';
 import validateConfig from './validate.js';
 
-import { MIN_PAYOUT } from '../const.js';
+import {EXIT_CODE_ERROR, MIN_PAYOUT} from '../../defines.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -101,7 +101,7 @@ console.info(`Pool ${address} successfully read a config-file (${loadedConfigPat
 
 function exit(...errorMessages) {
   console.error(...errorMessages);
-  process.exit(-1);
+  process.exit(EXIT_CODE_ERROR);
 }
 
 export default config;

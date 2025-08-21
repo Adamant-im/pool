@@ -1,6 +1,7 @@
 import * as process from 'node:process';
 
 import { api, config, log, notifier } from './helpers/index.js';
+import { EXIT_CODE_ERROR } from './defines.js';
 
 import blocksChecker from './modules/blocks_checker.js';
 import cron from './helpers/cron.js';
@@ -12,7 +13,7 @@ log.start();
 const cronStatusCode = cron.initCron(config.payoutperiod);
 
 if (cronStatusCode === -1) {
-  process.exit(-1);
+  process.exit(EXIT_CODE_ERROR);
 }
 
 server.listen(config.port, () => (
@@ -35,7 +36,7 @@ async function initDelegate() {
     config.poolName = pool.username;
   } else {
     log.error(`Failed to get delegate for ${config.address}. Cannot start Pool.`);
-    process.exit(-1);
+    process.exit(EXIT_CODE_ERROR);
   }
 
   config.logName = `_${config.poolName}_ (${config.address})`;

@@ -1,7 +1,7 @@
 import {
   DEVIATION,
   SAT,
-} from '../helpers/const.js';
+} from '../defines.js';
 
 import store from './store.js';
 

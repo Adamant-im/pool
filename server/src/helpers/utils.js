@@ -1,4 +1,4 @@
-import { EPOCH, SAT } from './const.js';
+import { EPOCH, SAT } from '../defines.js';
 
 function replaceWithDate(text, dateObject) {
   return text.replace(/{([a-zA-Z_]*)}/g, (_, digit) => dateObject[digit]);
