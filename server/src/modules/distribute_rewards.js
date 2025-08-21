@@ -6,7 +6,8 @@ import {
 import store from './store.js';
 
 import { config, log, notifier, utils } from '../helpers/index.js';
-import { dbBlocks, dbVoters } from '../helpers/DB.js';
+import mongo from '../repository/mongodb/index.js';
+// import { dbBlocks, dbVoters } from '../helpers/DB.js';
 
 class RewardDistributor {
   constructor(block) {
@@ -99,14 +100,24 @@ class RewardDistributor {
           const pending = dbVoter.pending + user.reward;
 
           // TODO: name properties in db normalno
-          const updatedVoter = await dbVoters.update(
+          const updatedVoter = await mongo.votersCollection.updateOne(
               { address: voter.address },
               {
-                pending,
-                votesCount,
-                weightADM: user.weight / SAT,
-                balanceADM: voterBalance / SAT,
+                $set: {
+                  pending,
+                  votesCount,
+                  weightADM: user.weight / SAT,
+                  balanceADM: voterBalance / SAT,
+                },
               });
+          // const updatedVoter = await dbVoters.update(
+          //     { address: voter.address },
+          //     {
+          //       pending,
+          //       votesCount,
+          //       weightADM: user.weight / SAT,
+          //       balanceADM: voterBalance / SAT,
+          //     });
 
           if (updatedVoter) {
             const userWeightInADM = utils.satsToADM(user.weight, 0);
@@ -122,12 +133,20 @@ class RewardDistributor {
             distributed.percent += user.percent;
 
             // Mark block processed, if any voter gets reward
-            const updatedBlock = await dbBlocks.update(
+            const updatedBlock = await mongo.blocksCollection.updateOne(
                 { id: block.id },
                 {
-                  processed: true,
-                  ...distributed,
+                    $set: {
+                      processed: true,
+                    ...distributed,
+                  },
                 });
+            // const updatedBlock = await dbBlocks.update(
+            //     { id: block.id },
+            //     {
+            //       processed: true,
+            //       ...distributed,
+            //     });
 
             if (updatedBlock) {
               this.isDistributionComplete = true;
@@ -160,7 +179,7 @@ class RewardDistributor {
     const { block } = this;
     const { address } = voter;
 
-    const savedVoter = await dbVoters.findOne({ address });
+    const savedVoter = await mongo.votersCollection.findOne({ address });
 
     if (savedVoter) {
       log.info(`Successfully added new voter ${voter.address} on block ${block.id} (height ${block.height}).`);
@@ -168,7 +187,7 @@ class RewardDistributor {
       return savedVoter;
     }
 
-    const addedVoter = await dbVoters.insert({
+    const addedVoter = await mongo.votersCollection.insertOne({
       address,
       pending: 0,
       received: 0,

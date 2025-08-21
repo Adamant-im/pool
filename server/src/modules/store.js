@@ -1,7 +1,8 @@
 import * as process from 'node:process';
 import { SAT, UPDATE_DELEGATE_INTERVAL } from '../defines.js';
 import { adamantApiClient, config, log, utils } from '../helpers/index.js';
-import { dbBlocks, dbTrans, dbVoters } from '../helpers/DB.js';
+// import { dbBlocks, dbTrans, dbVoters } from '../helpers/DB.js';
+import mongo from '../repository/mongodb/index.js';
 import payoutCron from '../cron/payout.cron.js';
 
 const store = {
@@ -87,7 +88,8 @@ const store = {
         nextRunDateString: nextRunMoment.toISODate(),
       };
 
-      const transactions = await dbTrans.find({});
+      // const transactions = await dbTrans.find({});
+      const transactions = await mongo.transactionsCollection.find({}).toArray();
 
       // Assume previous run is the last saved transaction
       const lastTransaction = transactions.sort((a, b) => b.timeStamp - a.timeStamp)[0];
@@ -102,9 +104,16 @@ const store = {
         };
       }
 
-      const periodBlocks = await dbBlocks.find(({ timestamp }) => (
-        timestamp > this.periodInfo.previousRunEpochtime
-      ));
+      // const periodBlocks = await dbBlocks.find(({ timestamp }) => (
+      //   timestamp > this.periodInfo.previousRunEpochtime
+      // ));
+      const periodBlocks = await mongo.blocksCollection.find(
+          {
+            timestamp: {
+              $gte: this.periodInfo.previousRunEpochtime,
+            },
+          },
+      ).toArray();
 
       if (periodBlocks) {
         const totalForgedSats = periodBlocks.reduce((sum, block) => sum + (+block.totalForged), 0);
@@ -122,7 +131,8 @@ const store = {
         };
       }
 
-      const voters = await dbVoters.find({});
+      // const voters = await dbVoters.find({});
+      const voters = await mongo.votersCollection.find({}).toArray();
 
       this.delegate.pendingRewardsADM = voters.reduce((sum, voter) => sum + voter.pending, 0);
     } catch (error) {
