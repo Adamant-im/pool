@@ -2,6 +2,7 @@ import * as process from 'node:process';
 import { SAT, UPDATE_DELEGATE_INTERVAL } from '../defines.js';
 import { adamantApiClient, config, log, utils } from '../helpers/index.js';
 import { dbBlocks, dbTrans, dbVoters } from '../helpers/DB.js';
+import payoutCron from '../cron/payout.cron.js';
 
 const store = {
   isDistributingRewards: false,
@@ -77,9 +78,7 @@ const store = {
         );
       }
 
-      const cron = (await import('../cron/payout.cron.js')).payoutCron;
-
-      const nextRunMoment = cron.nextDate();
+      const nextRunMoment = payoutCron.cronJob.nextDate();
 
       this.periodInfo = {
         ...this.periodInfo,

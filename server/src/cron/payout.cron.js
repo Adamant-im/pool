@@ -17,7 +17,7 @@ const PATTERNS = {
 const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default {
-  payoutCron: {},
+  cronJob: {},
   init(payoutPeriod) {
     try {
       let cronTime;
@@ -30,16 +30,16 @@ export default {
         throw new Error('Invalid cronTime');
       }
 
-      const payoutCron = CronJob.from({
+      this.cronJob = CronJob.from({
         cronTime,
         onTick: payer.payOut.bind(payer),
         start: false,
         name: 'payout',
       });
 
-      payoutCron.start();
+      this.cronJob.start();
 
-      this.payoutCron = payoutCron;
+      log.info('Payout cron job has been started');
     } catch (error) {
       log.error(
           `Pool's ${config.address} config is wrong. Failed to validate payoutperiod: `+
