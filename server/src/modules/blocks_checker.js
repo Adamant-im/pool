@@ -23,7 +23,6 @@ async function getBlocks() {
 }
 
 export default async () => {
-  console.log('Getting blocks');
   await getBlocks();
   setInterval(async () => {
     await getBlocks();
