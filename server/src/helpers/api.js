@@ -1,4 +1,4 @@
-import {AdamantApi} from 'adamant-api';
+import { AdamantApi } from 'adamant-api';
 
 import config from './config/reader.js';
 import log from './log.js';

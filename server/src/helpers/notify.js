@@ -1,8 +1,7 @@
-import axios from 'axios';
-
 import api from './api.js';
-import log from './log.js';
+import axios from 'axios';
 import config from './config/reader.js';
+import log from './log.js';
 
 const {
   adamant_notify: adamantNotify,

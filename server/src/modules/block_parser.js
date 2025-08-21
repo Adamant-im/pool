@@ -1,7 +1,7 @@
 import RewardDistributor from './distribute_rewards.js';
 
-import {dbBlocks} from '../helpers/DB.js';
-import {log} from '../helpers/index.js';
+import { dbBlocks } from '../helpers/DB.js';
+import { log } from '../helpers/index.js';
 
 class QueueNode {
   constructor(value) {
@@ -30,7 +30,7 @@ class BlockParser {
   }
 
   enqueue(block) {
-    const {id} = block;
+    const { id } = block;
 
     if (!this.queued(id)) {
       const node = new QueueNode(block);
@@ -50,7 +50,7 @@ class BlockParser {
 
   dequeue() {
     if (!this.isEmpty) {
-      const {value: block} = this.head;
+      const { value: block } = this.head;
 
       delete this.queue[block.id];
 
@@ -85,16 +85,14 @@ class BlockParser {
 
       this.isLocked = false;
 
-      await this.run();
-
-      // return this.run();
+      return this.run();
     }
   }
 
   async parse(block) {
-    const {id} = block;
+    const { id } = block;
 
-    const savedBlock = await dbBlocks.findOne({id});
+    const savedBlock = await dbBlocks.findOne({ id });
 
     const rewardDistributor = new RewardDistributor(block);
 

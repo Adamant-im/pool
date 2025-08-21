@@ -1,11 +1,12 @@
+import {
+  DEVIATION,
+  SAT,
+} from '../helpers/const.js';
+
 import store from './store.js';
 
-import {dbVoters, dbBlocks} from '../helpers/DB.js';
-import {notifier, config, utils, log} from '../helpers/index.js';
-import {
-  SAT,
-  DEVIATION,
-} from '../helpers/const.js';
+import { config, log, notifier, utils } from '../helpers/index.js';
+import { dbBlocks, dbVoters } from '../helpers/DB.js';
 
 class RewardDistributor {
   constructor(block) {
@@ -30,7 +31,7 @@ class RewardDistributor {
       this.disregardOwnVote();
     }
 
-    const {voters, block, votesWeight} = this;
+    const { voters, block, votesWeight } = this;
 
     if (votesWeight) {
       const distributionPromises = [];
@@ -42,8 +43,8 @@ class RewardDistributor {
       await Promise.all(distributionPromises);
 
       if (this.isDistributionComplete) {
-        const {distributed, eligibleVotersCount, blockTotalForged} = this;
-        const {votersCount, rewardsADM, percent} = distributed;
+        const { distributed, eligibleVotersCount, blockTotalForged } = this;
+        const { votersCount, rewardsADM, percent } = distributed;
 
         if (distributed.votersCount === eligibleVotersCount) {
           log.info(
@@ -67,7 +68,7 @@ class RewardDistributor {
   }
 
   disregardOwnVote() {
-    const {voters} = this;
+    const { voters } = this;
     const ownVoteIndex = voters.findIndex((voter) => voter.address === config.address);
 
     if (ownVoteIndex !== -1) {
@@ -79,10 +80,10 @@ class RewardDistributor {
   }
 
   async distributeForVoter(voter) {
-    const {block, distributed, votesWeight} = this;
+    const { block, distributed, votesWeight } = this;
 
     try {
-      const {votesCount} = voter;
+      const { votesCount } = voter;
       const voterBalance = +voter.balance;
 
       const isVoterEligible = votesCount && voterBalance > DEVIATION;
@@ -99,7 +100,7 @@ class RewardDistributor {
 
           // TODO: name properties in db normalno
           const updatedVoter = await dbVoters.update(
-              {address: voter.address},
+              { address: voter.address },
               {
                 pending,
                 votesCount,
@@ -122,7 +123,7 @@ class RewardDistributor {
 
             // Mark block processed, if any voter gets reward
             const updatedBlock = await dbBlocks.update(
-                {id: block.id},
+                { id: block.id },
                 {
                   processed: true,
                   ...distributed,
@@ -156,10 +157,10 @@ class RewardDistributor {
   }
 
   async findOrCreateVoter(voter) {
-    const {block} = this;
-    const {address} = voter;
+    const { block } = this;
+    const { address } = voter;
 
-    const savedVoter = await dbVoters.findOne({address});
+    const savedVoter = await dbVoters.findOne({ address });
 
     if (savedVoter) {
       log.info(`Successfully added new voter ${voter.address} on block ${block.id} (height ${block.height}).`);
@@ -181,7 +182,7 @@ class RewardDistributor {
   }
 
   notifyRewardsOnBlock(message, logLevel) {
-    const {block} = this;
+    const { block } = this;
 
     notifier(
         `Pool ${config.logName}: Rewards on block ${block.id} (height ${block.height}) ${message}`,

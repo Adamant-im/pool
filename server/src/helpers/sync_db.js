@@ -1,5 +1,5 @@
+import * as process from 'node:process';
 import log from './log.js';
-import * as process from "node:process";
 
 const getFilter = (query = {}) => {
   const queryType = typeof query;
@@ -7,7 +7,7 @@ const getFilter = (query = {}) => {
   if (queryType === 'function') {
     return query;
   } else if (queryType === 'object') {
-    const filter = (val) => {
+    return (val) => {
       for (const property in query) {
         if (Object.hasOwnProperty.call(query, property)) {
           if (val[property] !== query[property]) {
@@ -17,8 +17,6 @@ const getFilter = (query = {}) => {
       }
       return true;
     };
-
-    return filter;
   } else {
     throw new Error(`query should be a function or object, but got a ${queryType}`);
   }
@@ -30,7 +28,7 @@ export default (db, updateInterval) => {
   db.insert = async function(data) {
     try {
       if (!db.data?.values) {
-        db.data = {values: []};
+        db.data = { values: [] };
       }
 
       db.data.values.push(data);
@@ -89,7 +87,7 @@ export default (db, updateInterval) => {
         return;
       }
 
-      const {values} = db.data;
+      const { values } = db.data;
 
       const index = values.findIndex(filter);
 

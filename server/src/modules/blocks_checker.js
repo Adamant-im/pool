@@ -1,13 +1,14 @@
 import BlockParser from './block_parser.js';
 
-import {api, config, log} from '../helpers/index.js';
-import {UPDATE_BLOCKS_INTERVAL} from '../helpers/const.js';
+import { UPDATE_BLOCKS_INTERVAL } from '../helpers/const.js';
+
+import { api, config, log } from '../helpers/index.js';
 
 const blockParser = new BlockParser();
 
 async function getBlocks() {
   try {
-    const getBlocksResponse = await api.getBlocks({limit: 100, generatorPublicKey: config.publicKey});
+    const getBlocksResponse = await api.getBlocks({ limit: 100, generatorPublicKey: config.publicKey });
 
     if (getBlocksResponse.success) {
       getBlocksResponse.blocks.forEach((block) => blockParser.enqueue(block));
@@ -21,8 +22,9 @@ async function getBlocks() {
   }
 }
 
-export default () => {
-  // getBlocks();
+export default async () => {
+  console.log('Getting blocks');
+  await getBlocks();
   setInterval(async () => {
     await getBlocks();
   }, UPDATE_BLOCKS_INTERVAL);

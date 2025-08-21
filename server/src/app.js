@@ -1,11 +1,11 @@
-import store from './modules/store.js';
+import * as process from 'node:process';
+
+import { api, config, log, notifier } from './helpers/index.js';
+
 import blocksChecker from './modules/blocks_checker.js';
-
-import {notifier, config, log, api} from './helpers/index.js';
 import cron from './helpers/cron.js';
-import * as process from "node:process";
-
 import server from './server/index.js';
+import store from './modules/store.js';
 
 log.start();
 

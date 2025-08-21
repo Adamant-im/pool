@@ -1,19 +1,19 @@
-import jsonminify from 'jsonminify';
-import {createAddressFromPublicKey, createKeypairFromPassphrase} from 'adamant-api';
+import * as process from 'node:process';
+import { createAddressFromPublicKey, createKeypairFromPassphrase } from 'adamant-api';
 import fs from 'fs';
-import * as process from "node:process";
+import jsonminify from 'jsonminify';
 
-import {join, dirname} from 'path';
-import {fileURLToPath} from 'url';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 
-import validateConfig from './validate.js';
 import configSchema from './schema.js';
+import validateConfig from './validate.js';
 
-import {MIN_PAYOUT} from '../const.js';
+import { MIN_PAYOUT } from '../const.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const {version} = JSON.parse(
+const { version } = JSON.parse(
     fs.readFileSync(join(__dirname, '../../../../package.json'), 'utf-8'),
 );
 
@@ -59,11 +59,11 @@ for (const configPath of configPaths) {
 config.version = version;
 
 if (!config.node_ADM) {
-  exit(`Pool's config is wrong. ADM nodes are not set. Cannot start Pool.`);
+  exit('Pool\'s config is wrong. ADM nodes are not set. Cannot start Pool.');
 }
 
 if (!config.passPhrase) {
-  exit(`Pool's config is wrong. No passPhrase. Cannot start Pool.`);
+  exit('Pool\'s config is wrong. No passPhrase. Cannot start Pool.');
 }
 
 let keysPair;

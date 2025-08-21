@@ -1,13 +1,13 @@
+import {
+  FEE,
+  RETRY_PAYOUTS_COUNT,
+  RETRY_PAYOUTS_TIMEOUT,
+  SAT,
+} from '../helpers/const.js';
 import store from './store.js';
 
-import {notifier, api, config, log} from '../helpers/index.js';
-import {dbVoters, dbTrans} from '../helpers/DB.js';
-import {
-  SAT,
-  RETRY_PAYOUTS_TIMEOUT,
-  RETRY_PAYOUTS_COUNT,
-  FEE,
-} from '../helpers/const.js';
+import { api, config, log, notifier } from '../helpers/index.js';
+import { dbTrans, dbVoters } from '../helpers/DB.js';
 
 class Payer {
   constructor() {
@@ -22,7 +22,7 @@ class Payer {
   async payOut() {
     await this.updateVoters();
 
-    const {votersToReward, pendingUserRewards, periodInfo} = this;
+    const { votersToReward, pendingUserRewards, periodInfo } = this;
     const balance = store.delegate.balance / SAT;
 
     const infoString = this.getBaseInfoString(balance);
@@ -31,7 +31,7 @@ class Payer {
       return notifier(`Pool ${config.logName}: No pending payouts.\n${infoString}`, 'warn');
     }
 
-    const {retryNo} = this;
+    const { retryNo } = this;
     const nextRetryNo = retryNo + 1;
 
     if (pendingUserRewards > balance) {
@@ -105,7 +105,7 @@ class Payer {
         payoutInfoString += ` I've saved only ${savedTransactions} transactions.`;
       }
 
-      payoutInfoString += ` You better do these updates in database manually. Check log file for details.`;
+      payoutInfoString += ' You better do these updates in database manually. Check log file for details.';
     }
 
     payoutInfoString += maintenanceString;
@@ -160,14 +160,14 @@ class Payer {
       }
     }
 
-    return {payedUserRewards, paymentFees, payedCount, updatedVoters, savedTransactions};
+    return { payedUserRewards, paymentFees, payedCount, updatedVoters, savedTransactions };
   }
 
   async payVoter(voter) {
-    let {pending, address, received} = voter;
+    let { pending, address, received } = voter;
     const amount = voter.pending - FEE;
 
-    const result = {amount};
+    const result = { amount };
 
     log.log(`Processing payment of ${amount.toFixed(8)} ADM reward to ${address}…`);
 
@@ -192,7 +192,7 @@ class Payer {
     };
     delete transaction.success;
 
-    const updateVoter = await dbVoters.update({address}, {
+    const updateVoter = await dbVoters.update({ address }, {
       received, pending: 0,
     });
 
@@ -229,8 +229,8 @@ class Payer {
 
   async payToMaintenanceWallet() {
     try {
-      const {periodInfo} = this;
-      const {totalForgedADM, userRewardsADM} = store.periodInfo;
+      const { periodInfo } = this;
+      const { totalForgedADM, userRewardsADM } = store.periodInfo;
 
       const donateADM = (config.donate_percentage * totalForgedADM) / 100;
       const maintenanceADM = totalForgedADM - userRewardsADM - donateADM;
@@ -288,8 +288,8 @@ class Payer {
 
   async payDonation() {
     try {
-      const {periodInfo} = this;
-      const {totalForgedADM} = store.periodInfo;
+      const { periodInfo } = this;
+      const { totalForgedADM } = store.periodInfo;
 
       const donateADM = (config.donate_percentage * totalForgedADM) / 100;
 
@@ -335,7 +335,7 @@ class Payer {
   retry() {
     this.retryNo += 1;
 
-    const {retryNo} = this;
+    const { retryNo } = this;
     const timeout = retryNo * RETRY_PAYOUTS_TIMEOUT;
 
     if (this.retryNo > RETRY_PAYOUTS_COUNT) {
@@ -369,8 +369,8 @@ class Payer {
   }
 
   getBaseInfoString(balance) {
-    const {pendingUserRewards, votersToReward, votersBelowMin, belowMinRewards} = this;
-    const {totalForgedADM, userRewardsADM, forgedBlocks} = store.periodInfo;
+    const { pendingUserRewards, votersToReward, votersBelowMin, belowMinRewards } = this;
+    const { totalForgedADM, userRewardsADM, forgedBlocks } = store.periodInfo;
 
     let infoString = `Pending ${pendingUserRewards.toFixed(4)} ADM rewards for ${votersToReward.length} voters.`;
     infoString += `\n${votersBelowMin.length} voters forged less, than minimum ${config.minpayout} ADM, their pending rewards are ${belowMinRewards.toFixed(4)} ADM.`;
@@ -398,7 +398,7 @@ function getVotersRewards(voters) {
     }
   });
 
-  return {votersToReward, votersBelowMin, pendingUserRewards, belowMinRewards};
+  return { votersToReward, votersBelowMin, pendingUserRewards, belowMinRewards };
 }
 
 export default Payer;

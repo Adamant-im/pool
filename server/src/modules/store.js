@@ -1,7 +1,7 @@
-import {api, config, log, utils} from '../helpers/index.js';
-import {dbBlocks, dbTrans, dbVoters} from '../helpers/DB.js';
-import {SAT, UPDATE_DELEGATE_INTERVAL} from '../helpers/const.js';
-import * as process from "node:process";
+import * as process from 'node:process';
+import { SAT, UPDATE_DELEGATE_INTERVAL } from '../helpers/const.js';
+import { api, config, log, utils } from '../helpers/index.js';
+import { dbBlocks, dbTrans, dbVoters } from '../helpers/DB.js';
 
 const store = {
   isDistributingRewards: false,
@@ -103,7 +103,7 @@ const store = {
         };
       }
 
-      const periodBlocks = await dbBlocks.find(({timestamp}) => (
+      const periodBlocks = await dbBlocks.find(({ timestamp }) => (
         timestamp > this.periodInfo.previousRunEpochtime
       ));
 

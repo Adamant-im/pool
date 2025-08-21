@@ -1,12 +1,12 @@
-import {jest} from '@jest/globals';
-import {dbBlocks} from '../../src/helpers/DB.js';
+import { dbBlocks } from '../../src/helpers/DB.js';
+import { jest } from '@jest/globals';
 
 const mockDistribute = jest.fn();
 
 jest.unstable_mockModule('../../src/modules/distribute_rewards.js', () => ({
   __esModule: true,
   default: jest.fn().mockImplementation(() => {
-    return {distribute: mockDistribute};
+    return { distribute: mockDistribute };
   }),
 }));
 
@@ -23,7 +23,7 @@ describe('BlockParser', () => {
 
   it('should enqueue all blocks', () => {
     for (let id = 0; id < 3; id += 1) {
-      blockParser.enqueue({id});
+      blockParser.enqueue({ id });
     }
 
     expect(blockParser.length).toBe(3);
@@ -43,7 +43,7 @@ describe('BlockParser', () => {
 
 describe('blockParser.parse', () => {
   beforeEach(() => {
-    dbBlocks.data = {values: []};
+    dbBlocks.data = { values: [] };
     return dbBlocks.write();
   });
 
@@ -51,29 +51,29 @@ describe('blockParser.parse', () => {
   const id = 1;
 
   it('should not distribute rewards for processed block', async () => {
-    await dbBlocks.insert({id, processed: true});
+    await dbBlocks.insert({ id, processed: true });
 
-    await blockParser.parse({id});
+    await blockParser.parse({ id });
 
     expect(RewardDistributor).toHaveBeenCalledTimes(1);
     expect(mockDistribute).toHaveBeenCalledTimes(0);
   });
 
   it('should distribute rewards for not processed block', async () => {
-    await dbBlocks.insert({id});
+    await dbBlocks.insert({ id });
 
-    await blockParser.parse({id});
+    await blockParser.parse({ id });
 
     expect(RewardDistributor).toHaveBeenCalledTimes(1);
     expect(mockDistribute).toHaveBeenCalledTimes(1);
   });
 
   it('should save new block to DB and distribute', async () => {
-    const savedBlockBeforeParsing = await dbBlocks.findOne({id});
+    const savedBlockBeforeParsing = await dbBlocks.findOne({ id });
 
-    await blockParser.parse({id});
+    await blockParser.parse({ id });
 
-    const savedBlockAfterParsing = await dbBlocks.findOne({id});
+    const savedBlockAfterParsing = await dbBlocks.findOne({ id });
 
     expect(RewardDistributor).toHaveBeenCalledTimes(1);
     expect(mockDistribute).toHaveBeenCalledTimes(1);

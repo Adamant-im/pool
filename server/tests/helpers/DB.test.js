@@ -1,4 +1,4 @@
-import {dbTrans as db} from '../../src/helpers/DB.js';
+import { dbTrans as db } from '../../src/helpers/DB.js';
 
 const accounts = [
   {
@@ -30,7 +30,7 @@ const insertAccounts = () => {
 };
 
 const clearDB = () => {
-  db.data = {values: []};
+  db.data = { values: [] };
   return db.write();
 };
 
@@ -84,19 +84,19 @@ describe('db.find', () => {
 
     expect(Array.isArray(results)).toBeTruthy();
     expect(results.length).toBe(3);
-    expect(results).toContainEqual({balance: 200, id: 2});
-    expect(results).toContainEqual({balance: 300, id: 3});
-    expect(results).toContainEqual({balance: 1000, id: 5});
+    expect(results).toContainEqual({ balance: 200, id: 2 });
+    expect(results).toContainEqual({ balance: 300, id: 3 });
+    expect(results).toContainEqual({ balance: 1000, id: 5 });
   });
 
   test('db.find called with query object should find all objects', async () => {
     await insertAccounts();
-    const results = await db.find({balance: 100});
+    const results = await db.find({ balance: 100 });
 
     expect(Array.isArray(results)).toBeTruthy();
     expect(results.length).toBe(2);
-    expect(results).toContainEqual({balance: 100, id: 1});
-    expect(results).toContainEqual({balance: 100, id: 4});
+    expect(results).toContainEqual({ balance: 100, id: 1 });
+    expect(results).toContainEqual({ balance: 100, id: 4 });
   });
 
   test('db.find called with a string should throw error', () => {
@@ -121,14 +121,14 @@ describe('db.findOne', () => {
     await insertAccounts();
     const result = await db.findOne((obj) => obj.balance >= 200);
 
-    expect(result).toEqual({balance: 200, id: 2});
+    expect(result).toEqual({ balance: 200, id: 2 });
   });
 
   test('db.findOne called with query object should find first object', async () => {
     await insertAccounts();
-    const result = await db.findOne({balance: 100});
+    const result = await db.findOne({ balance: 100 });
 
-    expect(result).toEqual({balance: 100, id: 1});
+    expect(result).toEqual({ balance: 100, id: 1 });
   });
 
   test('db.findOne called with a string should return false', () => {
@@ -151,19 +151,19 @@ describe('db.update', () => {
 
   test('db.update called with function should update first object', async () => {
     await insertAccounts();
-    const result = await db.update((obj) => obj.id === 2, {balance: 100});
-    const dbItem = await db.findOne({id: 2});
+    const result = await db.update((obj) => obj.id === 2, { balance: 100 });
+    const dbItem = await db.findOne({ id: 2 });
 
-    expect(result).toEqual({balance: 100, id: 2});
-    expect(dbItem).toEqual({balance: 100, id: 2});
+    expect(result).toEqual({ balance: 100, id: 2 });
+    expect(dbItem).toEqual({ balance: 100, id: 2 });
   });
 
   test('db.update called with query object should update first object', async () => {
     await insertAccounts();
-    const result = await db.update({id: 1}, {balance: 400});
-    const dbItem = await db.findOne({id: 1});
+    const result = await db.update({ id: 1 }, { balance: 400 });
+    const dbItem = await db.findOne({ id: 1 });
 
-    expect(result).toEqual({balance: 400, id: 1});
-    expect(dbItem).toEqual({balance: 400, id: 1});
+    expect(result).toEqual({ balance: 400, id: 1 });
+    expect(dbItem).toEqual({ balance: 400, id: 1 });
   });
 });

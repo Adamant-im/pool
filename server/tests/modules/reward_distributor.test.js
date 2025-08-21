@@ -1,6 +1,6 @@
-import {jest} from '@jest/globals';
-import {config} from '../../src/helpers/index.js';
-import {dbVoters, dbBlocks} from '../../src/helpers/DB.js';
+import { dbBlocks, dbVoters } from '../../src/helpers/DB.js';
+import { config } from '../../src/helpers/index.js';
+import { jest } from '@jest/globals';
 
 jest.unstable_mockModule('../../src/modules/store.js', () => ({
   __esModule: true,
@@ -38,10 +38,10 @@ const mockBlock = {
 
 describe('RewardDistributor.distribute', () => {
   beforeEach(async () => {
-    dbVoters.data = {values: []};
+    dbVoters.data = { values: [] };
     await dbVoters.write();
 
-    dbBlocks.data = {values: []};
+    dbBlocks.data = { values: [] };
     await dbBlocks.write();
   });
 
@@ -84,12 +84,12 @@ describe('RewardDistributor.distribute', () => {
 
 describe('RewardDistributor.findOrCreateVoter', () => {
   beforeEach(() => {
-    dbVoters.data = {values: []};
+    dbVoters.data = { values: [] };
     return dbVoters.write();
   });
 
   const rewardDistributor = new RewardDistributor(mockBlock);
-  const mockVoter = {address: config.address};
+  const mockVoter = { address: config.address };
 
   describe('when there is no saved voter', () => {
     it('should create a new voter and return it', async () => {
@@ -108,7 +108,7 @@ describe('RewardDistributor.findOrCreateVoter', () => {
 
   describe('when there is saved voter', () => {
     it('should return saved voter', async () => {
-      await dbVoters.insert({...mockVoter, pending: 1, received: 0});
+      await dbVoters.insert({ ...mockVoter, pending: 1, received: 0 });
 
       const voter = await rewardDistributor.findOrCreateVoter(mockVoter);
 

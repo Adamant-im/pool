@@ -1,9 +1,10 @@
-import {Low, MemorySync} from 'lowdb';
-import {JSONFileSync} from 'lowdb/node';
-import * as process from "node:process";
+import * as process from 'node:process';
 
-import {join, dirname} from 'path';
-import {fileURLToPath} from 'url';
+import { Low, MemorySync } from 'lowdb';
+import { JSONFileSync } from 'lowdb/node';
+
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 
 import syncDB from './sync_db.js';
 
@@ -19,15 +20,15 @@ const createAdapter = (fileName) => (
 
 export const dbTrans = syncDB(new Low(
     createAdapter('transactions'),
-    { values: [] }
+    { values: [] },
 ));
 
 export const dbBlocks = syncDB(new Low(
     createAdapter('blocks'),
-    { values: [] }
+    { values: [] },
 ));
 
 export const dbVoters = syncDB(new Low(
     createAdapter('voters'),
-    { values: [] }
+    { values: [] },
 ), 60 * 1000 * 60);

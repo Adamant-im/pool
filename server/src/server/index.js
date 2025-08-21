@@ -1,12 +1,12 @@
-import express from 'express';
 import cors from 'cors';
+import express from 'express';
 
-import {dirname, join} from 'path';
-import {fileURLToPath} from 'url';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 
 import store from '../modules/store.js';
 
-import {dbVoters, dbTrans} from '../helpers/DB.js';
+import { dbTrans, dbVoters } from '../helpers/DB.js';
 import config from '../helpers/config/reader.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

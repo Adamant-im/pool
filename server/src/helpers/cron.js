@@ -1,6 +1,6 @@
-import cron from 'cron';
 import Payer from '../modules/pay_out.js';
 import config from './config/reader.js';
+import cron from 'cron';
 import log from './log.js';
 
 const payer = new Payer();
