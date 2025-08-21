@@ -22,8 +22,8 @@ const getFilter = (query = {}) => {
   }
 };
 
-export default (db, updateInterval) => {
-  db.read();
+export default async (db, updateInterval) => {
+  await db.read();
 
   db.insert = async function(data) {
     try {
@@ -51,9 +51,7 @@ export default (db, updateInterval) => {
         return [];
       }
 
-      const value = db.data.values.filter(filter);
-
-      return value;
+      return db.data.values.filter(filter);
     } catch (error) {
       log.warn(error);
 
@@ -69,9 +67,7 @@ export default (db, updateInterval) => {
         return;
       }
 
-      const value = db.data.values.find(filter);
-
-      return value;
+      return db.data.values.find(filter);
     } catch (error) {
       log.warn(error);
 
@@ -111,7 +107,7 @@ export default (db, updateInterval) => {
   };
 
   if (updateInterval && process.env.NODE_ENV !== 'test') {
-    setInterval(() => db.write(), updateInterval);
+    setInterval(async () => await db.write(), updateInterval);
   }
 
   return db;
