@@ -1,17 +1,18 @@
 import BlockParser from './block_parser.js';
 
-import { UPDATE_BLOCKS_INTERVAL } from '../defines.js';
+// import { UPDATE_BLOCKS_INTERVAL } from '../defines.js';
 
 import { adamantApiClient, config, log } from '../helpers/index.js';
 
 const blockParser = new BlockParser();
 
-async function getBlocks() {
+async function checkBlocks() {
   try {
     const getBlocksResponse = await adamantApiClient.getBlocks({ limit: 100, generatorPublicKey: config.publicKey });
 
     if (getBlocksResponse.success) {
-      getBlocksResponse.blocks.forEach((block) => blockParser.enqueue(block));
+      const { blocks } = getBlocksResponse;
+      blocks.forEach((block) => blockParser.enqueue(block));
 
       await blockParser.run();
     } else {
@@ -22,9 +23,11 @@ async function getBlocks() {
   }
 }
 
-export default async () => {
-  await getBlocks();
-  setInterval(async () => {
-    await getBlocks();
-  }, UPDATE_BLOCKS_INTERVAL);
-};
+export default checkBlocks;
+
+// export default async () => {
+//   await checkBlocks();
+//   setInterval(async () => {
+//     await checkBlocks();
+//   }, UPDATE_BLOCKS_INTERVAL);
+// };

@@ -20,13 +20,11 @@ server.listen(config.port, () => (
   log.log(`Pool ${config.address} successfully started a web server.`)
 ));
 
-if (process.env.NODE_ENV !== 'test') await adamantApiClient.checkNodes();
-
 // Wait for first API health check
 adamantApiClient.onReady(async () => {
   await initDelegate();
 
-  blocksChecker();
+  await blocksChecker();
 });
 
 async function initDelegate() {
