@@ -1,13 +1,12 @@
 import { MongoClient } from 'mongodb';
+import { config } from '../../helpers/index.js';
 
-// TODO: move to config
-const uri = 'mongodb://localhost:27017';
-const dbname = 'adamant-pool';
+const { uri, dbName } = config.mongodb;
 
 const client = new MongoClient(uri);
 
 await client.connect();
-const db = client.db(dbname);
+const db = client.db(dbName);
 
 export default {
     blocksCollection: db.collection('blocks'),
