@@ -90,32 +90,39 @@ class BlockParser {
   }
 
   async parse(block) {
-    const { id } = block;
-
-    const savedBlock = await mongo.blocksCollection.findOne({ id });
+    const { id, height } = block;
 
     const rewardDistributor = new RewardDistributor(block);
 
+    let savedBlock;
+    try {
+      savedBlock = await mongo.blocksCollection.findOne({ id });
+    } catch (error) {
+      log.error(`Failed to parse block ${id} with height ${height}: ${error}`);
+      return;
+    }
+
     if (savedBlock) {
       if (!savedBlock.processed) {
-        log.info(`Re-trying to distribute rewards for block ${block.id} (height ${block.height})…`);
+        log.info(`Re-trying to distribute rewards for block ${id} (height ${height})…`);
 
         await rewardDistributor.distribute();
       }
     } else {
-      log.info(`New block forged: ${block.id} (height ${block.height}).`);
+      log.info(`New block forged: ${id} (height ${height}).`);
 
-      const insertBlock = await mongo.blocksCollection.insertOne(block);
-
-      if (insertBlock) {
-        log.info(
-            `Block successfully saved: ${block.id} (height ${block.height}). Distributing rewards…`,
-        );
-
-        await rewardDistributor.distribute();
-      } else {
-        log.warn(`Failed to save block ${block.id} (height ${block.height}).`);
+      try {
+        await mongo.blocksCollection.insertOne(block);
+      } catch (error) {
+        log.error(`Failed to parse block ${id} with height ${height}: ${error}`);
+        return;
       }
+
+      log.info(
+          `Block successfully saved: ${id} (height ${height}). Distributing rewards…`,
+      );
+
+      await rewardDistributor.distribute();
     }
   }
 }

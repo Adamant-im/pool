@@ -99,46 +99,50 @@ class RewardDistributor {
           const pending = dbVoter.pending + user.reward;
 
           // TODO: name properties in db normalno
-          const updatedVoter = await mongo.votersCollection.updateOne(
-              { address: voter.address },
-              {
-                $set: {
-                  pending,
-                  votesCount,
-                  weightADM: user.weight / SAT,
-                  balanceADM: voterBalance / SAT,
-                },
-              });
+          try {
+            await mongo.votersCollection.updateOne(
+                { address: voter.address },
+                {
+                  $set: {
+                    pending,
+                    votesCount,
+                    weightADM: user.weight / SAT,
+                    balanceADM: voterBalance / SAT,
+                  },
+                });
+          } catch (error) {
+            log.error(`Error while distributing rewards for ${voter.address} on block ${block.id} (height ${block.height}): ${error}`);
+            return;
+          }
 
-          if (updatedVoter) {
-            const userWeightInADM = utils.satsToADM(user.weight, 0);
+          const userWeightInADM = utils.satsToADM(user.weight, 0);
 
-            log.log(
-                `Voter's rewards successfully updated on block ${block.id} (height ${block.height}): ` +
-                `reward for this block ${user.reward.toFixed(8)} ADM, ${pending.toFixed(8)} ADM payouts pending for ` +
-                `${voter.address}. userWeight: ${userWeightInADM} ADM (${user.percent.toFixed(2)}%).`,
-            );
+          log.log(
+              `Voter's rewards successfully updated on block ${block.id} (height ${block.height}): ` +
+              `reward for this block ${user.reward.toFixed(8)} ADM, ${pending.toFixed(8)} ADM payouts pending for ` +
+              `${voter.address}. userWeight: ${userWeightInADM} ADM (${user.percent.toFixed(2)}%).`,
+          );
 
-            distributed.votersCount += 1;
-            distributed.rewardsADM += user.reward;
-            distributed.percent += user.percent;
+          distributed.votersCount += 1;
+          distributed.rewardsADM += user.reward;
+          distributed.percent += user.percent;
 
-            // Mark block processed, if any voter gets reward
-            const updatedBlock = await mongo.blocksCollection.updateOne(
+          // Mark block processed, if any voter gets reward
+          try {
+            await mongo.blocksCollection.updateOne(
                 { id: block.id },
                 {
-                    $set: {
-                      processed: true,
+                  $set: {
+                    processed: true,
                     ...distributed,
                   },
                 });
-
-            if (updatedBlock) {
-              this.isDistributionComplete = true;
-            }
-          } else {
-            log.error(`Failed to update rewards for ${voter.address} voter on block ${block.id}.`);
+          } catch (error) {
+            log.error(`Error while distributing rewards for ${voter.address} on block ${block.id} (height ${block.height}): ${error}`);
+            return;
           }
+
+          this.isDistributionComplete = true;
         }
       }
     } catch (error) {
@@ -164,7 +168,12 @@ class RewardDistributor {
     const { block } = this;
     const { address } = voter;
 
-    const savedVoter = await mongo.votersCollection.findOne({ address });
+    let savedVoter;
+    try {
+      savedVoter = await mongo.votersCollection.findOne({ address });
+    } catch (error) {
+      throw new Error(`Failed to get voter ${address}: ${error}`);
+    }
 
     if (savedVoter) {
       log.info(`Successfully added new voter ${voter.address} on block ${block.id} (height ${block.height}).`);
@@ -172,17 +181,16 @@ class RewardDistributor {
       return savedVoter;
     }
 
-    const addedVoter = await mongo.votersCollection.insertOne({
-      address,
-      pending: 0,
-      received: 0,
-    });
-
-    if (!addedVoter) {
+    try {
+      return await mongo.votersCollection.insertOne({
+        address,
+        pending: 0,
+        received: 0,
+      });
+    } catch (error) {
       this.notifyRewardsOnBlock(`could not be distributed. Failed to add voter ${voter.address}`, 'error');
+      throw new Error(`Failed to add voter ${address}: ${error}`);
     }
-
-    return addedVoter;
   }
 
   notifyRewardsOnBlock(message, logLevel) {

@@ -192,42 +192,44 @@ class Payer {
     };
     delete transaction.success;
 
-    const updateVoter = await mongo.votersCollection.updateOne(
-        { address },
-        {
-          $set: {
-            received,
-            pending: 0,
-          },
-    });
-
-    if (updateVoter) {
-      log.log(
-          `Voter's rewards successfully updated after payout: ${received.toFixed(8)} ADM received in total, ` +
-          `0 ADM pending for ${address}.`,
-      );
-      result.isUpdated = true;
-    } else {
+    try {
+      await mongo.votersCollection.updateOne(
+          { address },
+          {
+            $set: {
+              received,
+              pending: 0,
+            },
+          });
+    } catch {
       log.error(
           `Failed to update rewards for ${address} after successful payout. ` +
           `Do it manually: ${received.toFixed(8)} ADM received in total, 0 ADM pending.`,
       );
+      return;
     }
 
-    const insertTransaction = await mongo.transactionsCollection.insertOne(transaction);
+    log.log(
+        `Voter's rewards successfully updated after payout: ${received.toFixed(8)} ADM received in total, ` +
+        `0 ADM pending for ${address}.`,
+    );
+    result.isUpdated = true;
 
-    if (insertTransaction) {
-      log.log(
-          `Successfully saved transaction ${transaction.transactionId} ` +
-          `after payout: ${pending.toFixed(8)} ADM payed to ${address}.`,
-      );
-      result.isTransactionSaved = true;
-    } else {
+    try {
+      await mongo.transactionsCollection.insertOne(transaction);
+    } catch {
       log.error(
           `Failed to save transaction ${transaction.transactionId} after successful payout. ` +
           `Do it manually: ${pending.toFixed(8)} ADM payed to ${address}.`,
       );
+      return;
     }
+
+    log.log(
+        `Successfully saved transaction ${transaction.transactionId} ` +
+        `after payout: ${pending.toFixed(8)} ADM payed to ${address}.`,
+    );
+    result.isTransactionSaved = true;
 
     return result;
   }
