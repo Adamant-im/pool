@@ -1,4 +1,4 @@
-import { dbBlocks, dbVoters } from '../../src/helpers/DB.js';
+import { dbBlocks, dbVoters } from '../../src/repository/lowdb/DB.js';
 import { config } from '../../src/helpers/index.js';
 import { jest } from '@jest/globals';
 

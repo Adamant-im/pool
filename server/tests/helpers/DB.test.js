@@ -1,4 +1,4 @@
-import { dbTrans as db } from '../../src/helpers/DB.js';
+import { dbTrans as db } from '../../src/repository/lowdb/DB.js';
 
 const accounts = [
   {

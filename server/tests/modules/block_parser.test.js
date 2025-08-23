@@ -1,4 +1,4 @@
-import { dbBlocks } from '../../src/helpers/DB.js';
+import { dbBlocks } from '../../src/repository/lowdb/DB.js';
 import { jest } from '@jest/globals';
 
 const mockDistribute = jest.fn();

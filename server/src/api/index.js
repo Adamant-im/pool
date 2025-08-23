@@ -3,8 +3,8 @@ import cors from 'cors';
 import express from 'express';
 import { fileURLToPath } from 'url';
 
-import { dbTrans, dbVoters } from '../helpers/DB.js';
 import config from '../helpers/config/reader.js';
+import mongo from '../repository/mongodb';
 import store from '../modules/store.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -28,13 +28,13 @@ app.use('/', express.static(publicDir));
 app.get('/', (req, res) => res.sendFile(join(publicDir, 'index.html')));
 
 app.get('/api/transactions', async (req, res) => {
-  const transactions = await dbTrans.find({});
+  const transactions = await mongo.transactionsCollection.find({}).toArray();
 
   return res.send(transactions);
 });
 
 app.get('/api/voters', async (req, res) => {
-  const voters = await dbVoters.find({});
+  const voters = await mongo.votersCollection.find({}).toArray();
 
   return res.send(voters);
 });
