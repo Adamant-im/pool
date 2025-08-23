@@ -4,7 +4,7 @@ import express from 'express';
 import { fileURLToPath } from 'url';
 
 import config from '../helpers/config/reader.js';
-import mongo from '../repository/mongodb';
+import mongo from '../repository/mongodb/index.js';
 import store from '../modules/store.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
