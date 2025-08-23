@@ -76,11 +76,13 @@
   /** Port for pool's public Web panel **/
   "port": 36667,
 
+  /** Express server CORS configuration **/
   "cors": {
     "origin": "*",
     "credentials": true
   },
 
+  /** MongoDB connection parameters **/
   "mongodb": {
     "uri": "mongodb://localhost:27017",
     "dbName": "adamant-pool"
