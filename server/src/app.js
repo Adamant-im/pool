@@ -1,7 +1,7 @@
 import * as process from 'node:process';
 
+import { EXIT_CODE_ERROR, UPDATE_BLOCKS_INTERVAL } from './defines.js';
 import { adamantApiClient, config, log, notifier } from './helpers/index.js';
-import { EXIT_CODE_ERROR } from './defines.js';
 import payoutCron from './cron/payout.cron.js';
 
 import blocksChecker from './modules/blocks_checker.js';
@@ -25,6 +25,9 @@ adamantApiClient.onReady(async () => {
   await initDelegate();
 
   await blocksChecker();
+  setInterval(async () => {
+    await blocksChecker();
+  }, UPDATE_BLOCKS_INTERVAL);
 });
 
 async function initDelegate() {
