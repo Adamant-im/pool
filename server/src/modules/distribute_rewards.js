@@ -7,7 +7,6 @@ import store from './store.js';
 
 import { config, log, notifier, utils } from '../helpers/index.js';
 import mongo from '../repository/mongodb/index.js';
-// import { dbBlocks, dbVoters } from '../helpers/DB.js';
 
 class RewardDistributor {
   constructor(block) {
@@ -110,14 +109,6 @@ class RewardDistributor {
                   balanceADM: voterBalance / SAT,
                 },
               });
-          // const updatedVoter = await dbVoters.update(
-          //     { address: voter.address },
-          //     {
-          //       pending,
-          //       votesCount,
-          //       weightADM: user.weight / SAT,
-          //       balanceADM: voterBalance / SAT,
-          //     });
 
           if (updatedVoter) {
             const userWeightInADM = utils.satsToADM(user.weight, 0);
@@ -141,12 +132,6 @@ class RewardDistributor {
                     ...distributed,
                   },
                 });
-            // const updatedBlock = await dbBlocks.update(
-            //     { id: block.id },
-            //     {
-            //       processed: true,
-            //       ...distributed,
-            //     });
 
             if (updatedBlock) {
               this.isDistributionComplete = true;

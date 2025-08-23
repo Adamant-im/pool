@@ -1,7 +1,5 @@
 import BlockParser from './block_parser.js';
 
-// import { UPDATE_BLOCKS_INTERVAL } from '../defines.js';
-
 import { adamantApiClient, config, log } from '../helpers/index.js';
 
 const blockParser = new BlockParser();
@@ -24,10 +22,3 @@ async function checkBlocks() {
 }
 
 export default checkBlocks;
-
-// export default async () => {
-//   await checkBlocks();
-//   setInterval(async () => {
-//     await checkBlocks();
-//   }, UPDATE_BLOCKS_INTERVAL);
-// };

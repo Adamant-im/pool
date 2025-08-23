@@ -1,6 +1,5 @@
 import RewardDistributor from './distribute_rewards.js';
 
-// import { dbBlocks } from '../helpers/DB.js';
 import { log } from '../helpers/index.js';
 import mongo from '../repository/mongodb/index.js';
 
@@ -93,8 +92,6 @@ class BlockParser {
   async parse(block) {
     const { id } = block;
 
-    // const savedBlock = await dbBlocks.findOne({ id });
-
     const savedBlock = await mongo.blocksCollection.findOne({ id });
 
     const rewardDistributor = new RewardDistributor(block);
@@ -108,7 +105,6 @@ class BlockParser {
     } else {
       log.info(`New block forged: ${block.id} (height ${block.height}).`);
 
-      // const insertBlock = await dbBlocks.insert(block);
       const insertBlock = await mongo.blocksCollection.insertOne(block);
 
       if (insertBlock) {

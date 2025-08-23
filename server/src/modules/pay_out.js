@@ -7,7 +7,6 @@ import {
 import store from './store.js';
 
 import { adamantApiClient, config, log, notifier } from '../helpers/index.js';
-// import { dbTrans, dbVoters } from '../helpers/DB.js';
 import mongo from '../repository/mongodb/index.js';
 
 class Payer {
@@ -193,9 +192,6 @@ class Payer {
     };
     delete transaction.success;
 
-    // const updateVoter = await dbVoters.update({ address }, {
-    //   received, pending: 0,
-    // });
     const updateVoter = await mongo.votersCollection.updateOne(
         { address },
         {
@@ -218,7 +214,6 @@ class Payer {
       );
     }
 
-    // const insertTransaction = await dbTrans.insert(transaction);
     const insertTransaction = await mongo.transactionsCollection.insertOne(transaction);
 
     if (insertTransaction) {
@@ -365,7 +360,6 @@ class Payer {
 
   async updateVoters() {
     const voters = await mongo.votersCollection.find({}).toArray();
-    // const voters = await dbVoters.find({});
     const {
       votersToReward,
       votersBelowMin,
