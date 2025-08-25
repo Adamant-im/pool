@@ -74,13 +74,41 @@ nano config.jsonc
 
 > See comments in `config.default.jsonc` for more parameters.
 
-### Migration from v2
+### Migration from v2 to v3
 
 To migrate a database from v2 run the migration script with the specified path to the target pool or database:
 
 ```bash
 # or ~/adamant-pool/db
 $ node scripts/migrate.mjs ~/adamant-pool
+```
+
+In order for the changes to take effect, you will need to restart your pool.
+
+### Migration from v3 to v4
+
+To migrate a database from v3 prepare the migration script:
+
+```bash
+$ cd scripts/migrate-lowdb-mongodb
+$ npm i
+```
+
+Configure MongoDB connection string and LowDB storage path with environment variables and run the migration script, e.g.:
+
+```bash
+$ MONGODB_URI=mongodb://localhost:27017 LOWDB_STORAGE_PATH=../../server/db node index.js
+```
+
+Specify MongoDB connection parameters at your config file:
+
+```jsonc
+  ...,
+  /** MongoDB connection parameters **/
+  "mongodb": {
+    "uri": "mongodb://localhost:27017",
+    "dbName": "adamant-pool"
+  }
 ```
 
 In order for the changes to take effect, you will need to restart your pool.
