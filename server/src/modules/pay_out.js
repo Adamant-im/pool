@@ -179,12 +179,12 @@ class Payer {
       );
     }
 
-    log.log(`Successfully payed ${amount.toFixed(8)} ADM reward to ${address} with Tx ${payment.data.transactionId}.`);
+    log.log(`Successfully payed ${amount.toFixed(8)} ADM reward to ${address} with Tx ${payment.transactionId}.`);
 
     received += pending;
 
     const transaction = {
-      ...payment.data,
+      ...payment,
       address,
       received, // user received in total, including fees
       payoutcount: pending, // user received this time, including Tx fee
@@ -262,7 +262,7 @@ class Payer {
             if (paymentMaintenance.success) {
               periodInfo.maintenancePaid = true;
 
-              log.log(`Successfully payed ${logPayAmount} with Tx ${paymentMaintenance.data.transactionId}.`);
+              log.log(`Successfully payed ${logPayAmount} with Tx ${paymentMaintenance.transactionId}.`);
               maintenanceString = `\nSent ${notifyPayAmount}.`;
             } else {
               maintenanceString = `\nUnable to send ${notifyPayAmount}, do it manually. ${paymentMaintenance.errorMessage}.`;
