@@ -1,12 +1,15 @@
+dist
+coverage/
 node_modules/
+logs/
+.idea/
+.vscode/
+.editorconfig
+.DS_Store
 
 config.test.jsonc
 config.json
 config.jsonc
 
-logs/
-
-.vscode/
-.idea/
-
-.DS_Store
+# ai
+.ai-ignored/

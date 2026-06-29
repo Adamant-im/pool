@@ -39,13 +39,13 @@ You will need [NodeJS](http://nodejs.org/) and npm.
 After cloning the repo, run:
 
 ``` bash
-$ npm install # install the dependencies of the project and husky
+npm install # install the dependencies of the project and husky
 ```
 
 If you are only going to work with server logic, you can build the web part:
 
 ```bash
-$ npm run build:web
+npm run build:web
 ```
 
 ## Project Structure
