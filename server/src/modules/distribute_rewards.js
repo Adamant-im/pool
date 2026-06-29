@@ -9,6 +9,10 @@ import { config, log, notifier, utils } from '../helpers/index.js';
 import mongo from '../repository/mongodb/index.js';
 
 class RewardDistributor {
+  /**
+   * Creates a reward distributor for a forged block.
+   * @param {object} block Forged block returned by the ADAMANT node API
+   */
   constructor(block) {
     this.block = block;
     this.blockTotalForged = +block.totalForged;
@@ -26,6 +30,10 @@ class RewardDistributor {
     this.isDistributionComplete = false;
   }
 
+  /**
+   * Calculates and stores reward updates for all eligible voters of the block.
+   * @returns {Promise<void>}
+   */
   async distribute() {
     if (!config.considerownvote) {
       this.disregardOwnVote();
@@ -67,6 +75,10 @@ class RewardDistributor {
     }
   }
 
+  /**
+   * Removes the delegate's own vote from the current distribution weight.
+   * @returns {void}
+   */
   disregardOwnVote() {
     const { voters } = this;
     const ownVoteIndex = voters.findIndex((voter) => voter.address === config.address);
@@ -79,6 +91,11 @@ class RewardDistributor {
     }
   }
 
+  /**
+   * Calculates and persists the reward for a single voter when the voter is eligible.
+   * @param {object} voter Voter account returned by the ADAMANT node API
+   * @returns {Promise<void>}
+   */
   async distributeForVoter(voter) {
     const { block, distributed, votesWeight } = this;
 
@@ -98,7 +115,7 @@ class RewardDistributor {
 
           const pending = dbVoter.pending + user.reward;
 
-          // TODO: name properties in db normalno
+          // Keep existing DB field names for compatibility with stored voter records.
           try {
             await mongo.votersCollection.updateOne(
                 { address: voter.address },
@@ -152,6 +169,13 @@ class RewardDistributor {
     }
   }
 
+  /**
+   * Calculates a voter's reward share for the current block.
+   * @param {number} voterBalance Voter balance in sats
+   * @param {number} votesCount Number of delegates the voter supports
+   * @param {number} votesWeight Total eligible vote weight in sats
+   * @returns {{weight: number, percent: number, reward: number}} Reward weight, percentage, and ADM amount
+   */
   calcVoterReward(voterBalance, votesCount, votesWeight) {
     const weight = voterBalance / votesCount;
     const percent = ((weight / votesWeight) * config.reward_percentage * store.delegate.productivity) / 100;
@@ -164,6 +188,11 @@ class RewardDistributor {
     };
   }
 
+  /**
+   * Returns an existing voter record or creates a new pending-reward record.
+   * @param {object} voter Voter account returned by the ADAMANT node API
+   * @returns {Promise<object>} MongoDB voter document or insert result
+   */
   async findOrCreateVoter(voter) {
     const { block } = this;
     const { address } = voter;
@@ -172,27 +201,39 @@ class RewardDistributor {
     try {
       savedVoter = await mongo.votersCollection.findOne({ address });
     } catch (error) {
-      throw new Error(`Failed to get voter ${address}: ${error}`);
+      throw new Error(`Failed to get voter ${address}`, { cause: error });
     }
 
     if (savedVoter) {
-      log.info(`Successfully added new voter ${voter.address} on block ${block.id} (height ${block.height}).`);
+      log.info(`Found voter ${voter.address} on block ${block.id} (height ${block.height}).`);
 
       return savedVoter;
     }
 
+    const newVoter = {
+      address,
+      pending: 0,
+      received: 0,
+    };
+
     try {
-      return await mongo.votersCollection.insertOne({
-        address,
-        pending: 0,
-        received: 0,
-      });
+      await mongo.votersCollection.insertOne(newVoter);
+
+      log.info(`Successfully added new voter ${voter.address} on block ${block.id} (height ${block.height}).`);
+
+      return newVoter;
     } catch (error) {
       this.notifyRewardsOnBlock(`could not be distributed. Failed to add voter ${voter.address}`, 'error');
-      throw new Error(`Failed to add voter ${address}: ${error}`);
+      throw new Error(`Failed to add voter ${address}`, { cause: error });
     }
   }
 
+  /**
+   * Sends and logs a block-specific reward distribution notification.
+   * @param {string} message Block-specific distribution status message
+   * @param {string} logLevel Notification severity level
+   * @returns {void}
+   */
   notifyRewardsOnBlock(message, logLevel) {
     const { block } = this;
 

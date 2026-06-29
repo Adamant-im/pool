@@ -21,6 +21,11 @@ const getFullConfigPath = (configPath) => (
   join(__dirname, '../../../../', configPath)
 );
 
+/**
+ * Loads and parses a JSONC config file relative to the repository root.
+ * @param {string} configPath Config path relative to the repository root
+ * @returns {object} Parsed configuration object
+ */
 const loadConfig = (configPath) => {
   return JSON.parse(jsonminify(
       fs.readFileSync(getFullConfigPath(configPath), 'utf-8'),
@@ -86,7 +91,7 @@ if (errorMessage) {
 }
 
 if (config.minpayout < MIN_PAYOUT) {
-  exit(`Pool's ${address} config is wrong. Parameter minpayout cannot be less, than ${MIN_PAYOUT} (ADM). Cannot start Pool.`);
+  exit(`Pool's ${address} config is wrong. Parameter minpayout cannot be lower than ${MIN_PAYOUT} ADM. Cannot start Pool.`);
 }
 
 config.poolsShare = 100 - config.reward_percentage - config.donate_percentage;
@@ -97,8 +102,13 @@ if (config.poolsShare < 0) {
 
 config.payoutperiod = config.payoutperiod[0].toUpperCase() + config.payoutperiod.slice(1).toLowerCase();
 
-console.info(`Pool ${address} successfully read a config-file (${loadedConfigPath ? loadedConfigPath : 'default'}).`);
+console.info(`Pool ${address} successfully read config file (${loadedConfigPath ? loadedConfigPath : 'default'}).`);
 
+/**
+ * Logs fatal config errors and terminates the process.
+ * @param {...unknown} errorMessages Error message parts to print
+ * @returns {never}
+ */
 function exit(...errorMessages) {
   console.error(...errorMessages);
   process.exit(EXIT_CODE_ERROR);

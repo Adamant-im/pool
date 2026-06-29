@@ -1,91 +1,120 @@
-# Contributing Guide
+# Contributing to ADAMANT Forging Pool
 
-Hi! We are really excited that you are interested in contributing to ADAMANT. Before submitting your contribution, please make sure to take a moment and read through the following guidelines:
+Thank you for improving ADAMANT Forging Pool. Changes should protect payout correctness, reward accounting, pool credentials, decentralized node access, and contributor clarity.
 
-- [Issue Reporting Guidelines](#issue-reporting-guidelines)
-- [Pull Request Guidelines](#pull-request-guidelines)
-- [Development Setup](#development-setup)
-- [Project Structure](#project-structure)
+All repository artifacts, including code, comments, documentation, commits, issues, and pull requests, must be written in English.
 
-## Issue Reporting Guidelines
+## Before You Start
 
-- Always use https://github.com/Adamant-im/pool/issues to create new issues.
-
-## Pull Request Guidelines
-
-- The `master` branch is just a snapshot of the latest stable release. All development should be done in dedicated branches. **Do not submit PRs against the `master` branch.**
-
-- Checkout a topic branch from the relevant branch, e.g. `dev`, and merge back against that branch.
-
-- Work in the `src` folder and **DO NOT** check-in `dist` in the commits.
-
-- It's OK to have multiple small commits as you work on the PR - GitHub will automatically squash it before merging.
-
-- Make sure `npm run lint` passes. (see [development setup](#development-setup))
-
-- If adding a new feature:
-  - Add accompanying test case.
-  - Provide a convincing reason to add this feature. Ideally, you should open a suggestion issue first and have it approved before working on it.
-
-- If fixing bug:
-  - If you are resolving a special issue, add `(fix #xxxx[,#xxxx])` (#xxxx is the issue id) in your PR title for a better release log, e.g. `update entities encoding/decoding (fix #3899)`.
-  - Provide a detailed description of the bug in the PR. Live demo preferred.
-  - Add appropriate test coverage if applicable.
+- Search [existing issues](https://github.com/Adamant-im/pool/issues) before opening a new one
+- Use a concise issue prefix such as `[Bug]`, `[Feat]`, `[Enhancement]`, `[Refactor]`, `[Docs]`, `[Test]`, `[Chore]`, or `[Task]`
+- Base work on `dev` and target `dev` in pull requests
+- Keep changes focused and reviewable
+- Never commit or log pool passphrases, private keys, notification tokens, API credentials, local config contents, or MongoDB credentials
 
 ## Development Setup
 
-You will need [NodeJS](http://nodejs.org/) and npm.
+Use Node.js `22.13.0` or newer and npm `10` or newer:
 
-After cloning the repo, run:
-
-``` bash
-npm install # install the dependencies of the project and husky
+```sh
+git clone https://github.com/Adamant-im/pool.git
+cd pool
+git switch dev
+npm run install:all
 ```
 
-If you are only going to work with server logic, you can build the web part:
+Create a dedicated branch and keep commits compatible with Conventional Commits:
 
-```bash
+```sh
+git switch -c chore/short-description
+```
+
+Copy the public config reference only for local development:
+
+```sh
+cp config.default.jsonc config.jsonc
+```
+
+Do not commit `config.jsonc`, `config.json`, `config.test.jsonc`, logs, runtime database files, or temporary files from `.ai-ignored/`.
+
+Build the dashboard before launching the pool or when server-only work needs a fresh web bundle:
+
+```sh
 npm run build:web
 ```
 
+## Validation
+
+Choose the smallest focused check while developing, then run the relevant baseline before submitting.
+
+Server changes:
+
+```sh
+npm --prefix server run lint
+npm --prefix server test
+```
+
+Dashboard changes:
+
+```sh
+npm --prefix web run lint
+npm --prefix web run build
+```
+
+Root workflow, documentation, or package changes:
+
+```sh
+npm run build:web
+npm run format:check
+npm audit
+git diff --check
+```
+
+Dependency changes should also run audits in the affected package roots:
+
+```sh
+npm audit
+npm --prefix server audit
+npm --prefix web audit
+npm --prefix scripts/migrate-lowdb-mongodb audit
+```
+
+Report the exact commands run and any skipped or blocked validation in the pull request.
+
+## Dependency Updates
+
+- Prefer `ncu` to inspect available direct dependency updates
+- Install with lifecycle scripts disabled by default
+- Do not enable install scripts globally
+- Keep dependency additions minimal, especially around networking, cryptography, config parsing, payout logic, and storage
+- Document any trusted rebuild step if a dependency requires one
+
 ## Project Structure
 
-This repository employs a [monorepo](https://en.wikipedia.org/wiki/Monorepo) setup which hosts a number of associated packages under the root directory:
+- `server/`: backend runtime, ADAMANT API access, config loading and validation, reward distribution, payouts, MongoDB storage, notifications, cron scheduling, and HTTP API
+- `web/`: Svelte dashboard for pool status, voters, rewards, and transactions
+- `scripts/`: operational and migration helpers
+- `config.default.jsonc`: public config reference
+- `.ai-ignored/`: local AI workflow notes and temporary GitHub body files
 
-- **`server`**: contains server logic
+## Reward and Payout Changes
 
-  - Commonly used npm commands:
+Read the full affected flow before changing:
 
-    ```bash
-    # start the server
-    $ npm run start
+- `server/src/modules/distribute_rewards.js`
+- `server/src/modules/pay_out.js`
+- `server/src/modules/store.js`
+- `server/src/repository/mongodb/index.js`
+- ADAMANT API helpers and config validation
 
-    # run linter
-    $ npm run lint
+Preserve accounting invariants for pending rewards, received rewards, transaction fees, donation payouts, maintenance payouts, retries, and local storage updates. Add focused tests for payout or reward behavior whenever practical.
 
-    # run all tests
-    $ npm run test
-    ```
+## Pull Requests
 
-  - Create and use `config.test.jsonc` config file instead of default one
-
-- **`web`**: contains front-end part
-
-  - Commonly used npm commands:
-
-    ```bash
-    # start dev server
-    $ npm run dev
-
-    # run linter
-    $ npm run lint
-
-    # build the web
-    $ npm run build
-    ```
-
-  - You can create `.env` file to use custom API base url, e.g.:
-
-    ```bash
-    VITE_BASE_URL=http://localhost:36667/api
-    ```
+- Use a title in `Type: Short summary` form, for example `Chore: Modernize pool dependencies`
+- Do not use issue-style square-bracket prefixes in PR titles
+- Link related issues explicitly, using closing keywords when appropriate
+- Explain payout, reward, storage, config, or API behavior changes
+- Update documentation when behavior, setup, config, or workflows change
+- Include validation commands and meaningful risk notes
+- Keep commits small and reviewable; maintainers may squash them when merging

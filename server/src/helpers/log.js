@@ -12,31 +12,55 @@ const infoStr = fs.createWriteStream(`./logs/${date()}.log`, {
 });
 
 export default {
+  /**
+   * Writes the pool start marker into the current log file.
+   * @returns {void}
+   */
   start() {
     infoStr.write(`\n\n[The pool started] _________________${fullTime()}_________________\n`);
   },
+  /**
+   * Logs an error message.
+   * @param {string} str Message to log
+   * @returns {void}
+   */
   error(str) {
     if (['error', 'warn', 'info', 'log'].includes(config.log_level)) {
       infoStr.write('\n ' + 'error|' + fullTime() + '|' + str);
       console.log('\x1b[31m', 'error|' + fullTime(), '\x1b[0m', str);
     }
   },
+  /**
+   * Logs a warning message.
+   * @param {string} str Message to log
+   * @returns {void}
+   */
   warn(str) {
     if (['warn', 'info', 'log'].includes(config.log_level)) {
       console.log('\x1b[33m', 'warn|' + fullTime(), '\x1b[0m', str);
       infoStr.write('\n ' + 'warn|' + fullTime() + '|' + str);
     }
   },
+  /**
+   * Logs an informational message.
+   * @param {string} str Message to log
+   * @returns {void}
+   */
   info(str) {
     if (['info', 'log'].includes(config.log_level)) {
       console.log('\x1b[32m', 'info|' + fullTime(), '\x1b[0m', str);
       infoStr.write('\n ' + 'info|' + fullTime() + '|' + str);
     }
   },
+  /**
+   * Logs a verbose operational message.
+   * @param {string} str Message to log
+   * @returns {void}
+   */
   log(str) {
     if (['log'].includes(config.log_level)) {
       console.log('\x1b[34m', 'log|' + fullTime(), '\x1b[0m', str);
-      infoStr.write('\n ' + 'log|[' + fullTime() + '|' + str);
+      infoStr.write('\n ' + 'log|' + fullTime() + '|' + str);
     }
   },
 };

@@ -1,31 +1,38 @@
 {
+  "name": "adamant-pool-web",
+  "version": "3.1.0",
   "private": true,
+  "description": "Voter dashboard for ADAMANT Forging Pool status, rewards, and payouts",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "lint": "npx eslint .",
-    "lint:fix": "npx eslint .",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
     "build": "vite build",
     "preview": "vite preview"
   },
+  "engines": {
+    "node": ">=22.13.0",
+    "npm": ">=10"
+  },
   "devDependencies": {
-    "@eslint/js": "^9.31.0",
-    "@eslint/json": "^0.13.0",
-    "@eslint/markdown": "^7.0.0",
-    "@smui/button": "^8.0.1",
-    "@smui/common": "^8.0.1",
-    "@smui/data-table": "^8.0.1",
-    "@smui/icon-button": "^8.0.1",
-    "@smui/select": "^8.0.1",
-    "@sveltejs/vite-plugin-svelte": "^6.1.0",
-    "eslint": "^9.31.0",
-    "globals": "^16.3.0",
-    "svelte": "^5.36.12",
-    "vite": "^7.0.5",
+    "@eslint/js": "^10.0.1",
+    "@eslint/json": "^2.0.0",
+    "@eslint/markdown": "^8.0.2",
+    "@smui/button": "^9.0.1",
+    "@smui/common": "^9.0.1",
+    "@smui/data-table": "^9.0.1",
+    "@smui/icon-button": "^9.0.1",
+    "@smui/select": "^9.0.1",
+    "@sveltejs/vite-plugin-svelte": "^7.1.2",
+    "eslint": "^10.6.0",
+    "globals": "^17.7.0",
+    "svelte": "^5.56.4",
+    "vite": "^8.1.0",
     "vite-plugin-windicss": "^1.9.4",
     "windicss": "^3.5.6"
   },
   "dependencies": {
-    "svelte-material-ui": "^8.0.1"
+    "svelte-material-ui": "^9.0.1"
   }
 }

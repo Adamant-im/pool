@@ -1,6 +1,12 @@
-import { dbBlocks, dbVoters } from '../../src/repository/lowdb/DB.js';
 import { config } from '../../src/helpers/index.js';
 import { jest } from '@jest/globals';
+
+import mongoMock from '../helpers/mongoMock.js';
+
+jest.unstable_mockModule('../../src/repository/mongodb/index.js', () => ({
+  __esModule: true,
+  default: mongoMock,
+}));
 
 jest.unstable_mockModule('../../src/modules/store.js', () => ({
   __esModule: true,
@@ -38,11 +44,7 @@ const mockBlock = {
 
 describe('RewardDistributor.distribute', () => {
   beforeEach(async () => {
-    dbVoters.data = { values: [] };
-    await dbVoters.write();
-
-    dbBlocks.data = { values: [] };
-    await dbBlocks.write();
+    mongoMock.resetAll();
   });
 
   describe('when config.considerownvote === false', () => {
@@ -63,7 +65,7 @@ describe('RewardDistributor.distribute', () => {
   it('should distribute rewards for voter', async () => {
     const rewardDistributor = new RewardDistributor(mockBlock);
 
-    await dbBlocks.insert(mockBlock);
+    await mongoMock.blocksCollection.insertOne(mockBlock);
 
     const mockVoter = {
       address: config.address,
@@ -84,8 +86,7 @@ describe('RewardDistributor.distribute', () => {
 
 describe('RewardDistributor.findOrCreateVoter', () => {
   beforeEach(() => {
-    dbVoters.data = { values: [] };
-    return dbVoters.write();
+    mongoMock.resetAll();
   });
 
   const rewardDistributor = new RewardDistributor(mockBlock);
@@ -95,7 +96,7 @@ describe('RewardDistributor.findOrCreateVoter', () => {
     it('should create a new voter and return it', async () => {
       const voter = await rewardDistributor.findOrCreateVoter(mockVoter);
 
-      const savedVoter = await dbVoters.findOne(mockVoter);
+      const savedVoter = await mongoMock.votersCollection.findOne(mockVoter);
 
       expect(voter).toStrictEqual({
         ...mockVoter,
@@ -108,7 +109,7 @@ describe('RewardDistributor.findOrCreateVoter', () => {
 
   describe('when there is saved voter', () => {
     it('should return saved voter', async () => {
-      await dbVoters.insert({ ...mockVoter, pending: 1, received: 0 });
+      await mongoMock.votersCollection.insertOne({ ...mockVoter, pending: 1, received: 0 });
 
       const voter = await rewardDistributor.findOrCreateVoter(mockVoter);
 

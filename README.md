@@ -1,146 +1,127 @@
 # ADAMANT Forging Pool
 
-> Read more about [Forging, delegates, Fair dPoS, and how to run your Forging pool](https://medium.com/adamant-im/earning-money-on-adm-forging-4c7b6eb15516)
+ADAMANT Forging Pool calculates delegate voter rewards, sends scheduled payouts, stores reward history in MongoDB, serves a public voter dashboard, and notifies operators about important pool events.
 
-> This software is a successor of outdated [v2 Forging pool](https://github.com/Adamant-im/adamant-pool)
+This repository is the maintained successor of the older [`adamant-pool`](https://github.com/Adamant-im/adamant-pool) implementation.
 
-<br>
+![ADAMANT Forging Pool](./assets/logo.png)
 
-<p align="center">
-  <img src="./assets/logo.png#gh-light-mode-only" height="60"/>
-  <img src="./assets/logo-dark.png#gh-dark-mode-only" height="60"/>
-</p>
+## Features
 
-<p align="center">
- Calculate and transfer voters’ rewards automatically.
-</p>
+- Automated reward calculation for delegate voters
+- Scheduled ADM payouts with retry handling
+- Optional donation and maintenance wallet payouts
+- MongoDB-backed block, voter, and transaction history
+- Public dashboard for pool status, voter rewards, and transactions
+- ADAMANT and Slack notifications for operators
+- Decentralized ADAMANT node access with node failover through `adamant-api`
+- Migration helpers for older LowDB-based pool data
 
-<h1></h1>
+## Requirements
 
-- :rainbow: Easy to install
-- :handshake: Reliable, uses decentralized network advantages
-- :hammer_and_wrench: Customizable (using config file)
-- :scroll: History stored in local files (powered by [lowdb](https://github.com/typicode/lowdb))
-- :rocket: Minimum server requirements: 1 vCPU and 512 MB of RAM
-- :carpentry_saw: You can setup the pool on a separate machine without a node
-- :chart_with_upwards_trend: Dashboard for voters with mobile version support
-- :bell: Notification system via ADAMANT or Slack for admin
+- Node.js `22.13.0` or newer
+- npm `10` or newer
+- MongoDB `6` or newer
+- An ADAMANT delegate account with enough ADM for payout fees
 
 ## Installation
 
-### Requirements
+Clone the repository and install dependencies:
 
-- NodeJS v16+ (already installed if you have a node on your machine)
-
-### Setup
-
-Clone the repository with pool into a newly created directory:
-
-```bash
-git clone https://github.com/Adamant-im/pool
-```
-
-Move to directory with the cloned repository:
-
-```bash
+```sh
+git clone https://github.com/Adamant-im/pool.git
 cd pool
+npm run install:all
 ```
 
-Install dependencies using npm or any other package manager:
+`npm run install:all` installs root, server, web, and migration-script dependencies with lifecycle scripts disabled. If you install packages manually, prefer:
 
-```bash
-npm install
+```sh
+npm install --ignore-scripts
+npm --prefix server install --ignore-scripts
+npm --prefix web install --ignore-scripts
 ```
 
-Build a website:
+Build the dashboard:
 
-```bash
+```sh
 npm run build:web
 ```
 
-### Pre-launch tuning
+## Configuration
 
-Copy default config as `config.jsonc`:
+Create a local config file:
 
-```bash
+```sh
 cp config.default.jsonc config.jsonc
 ```
 
-And edit that file by inserting the pool's secret phrase as the minimum configuration, e.g. using `nano`:
+Edit `config.jsonc` and set at least:
 
-```bash
-nano config.jsonc
-```
+- `passPhrase`: secret phrase of the pool delegate account
+- `node_ADM`: ADAMANT node URLs used for blockchain API access
+- `mongodb.uri`: MongoDB connection URI
+- `mongodb.dbName`: database name for pool storage
+- payout parameters such as `reward_percentage`, `minpayout`, and `payoutperiod`
 
-> See comments in `config.default.jsonc` for more parameters.
-
-### Migration from v2 to v3
-
-To migrate a database from v2 run the migration script with the specified path to the target pool or database:
-
-```bash
-# or ~/adamant-pool/db
-$ node scripts/migrate.mjs ~/adamant-pool
-```
-
-In order for the changes to take effect, you will need to restart your pool.
-
-### Migration from v3 to v4
-
-To migrate a database from v3 prepare the migration script:
-
-```bash
-$ cd scripts/migrate-lowdb-mongodb
-$ npm i
-```
-
-Configure MongoDB connection string and LowDB storage path with environment variables and run the migration script, e.g.:
-
-```bash
-$ MONGODB_URI=mongodb://localhost:27017 LOWDB_STORAGE_PATH=../../server/db node index.js
-```
-
-Specify MongoDB connection parameters at your config file:
-
-```jsonc
-  ...,
-  /** MongoDB connection parameters **/
-  "mongodb": {
-    "uri": "mongodb://localhost:27017",
-    "dbName": "adamant-pool"
-  }
-```
-
-In order for the changes to take effect, you will need to restart your pool.
+Keep `config.jsonc`, `config.json`, and `config.test.jsonc` local. They may contain pool credentials and notification tokens.
 
 ## Launching
 
-You can start the pool using `npm` command:
+Start the pool directly:
 
-```bash
-npm run start
+```sh
+npm start
 ```
 
-but we recommend to use a process manager to start the pool, f.e. [`pm2`](https://pm2.keymetrics.io/):
+For production, use a process manager such as [`pm2`](https://pm2.keymetrics.io/):
 
-```bash
-pm2 start ./scripts/start.sh --name "adamantpool"
+```sh
+pm2 start ./scripts/start.sh --name adamantpool
 ```
 
-## Add pool to cron
+## Migrations
 
-Edit crontab file using the command below:
+### From v2 Pool
 
-```bash
-crontab -e
+To migrate an older v2 pool database, pass the old pool directory or database directory:
+
+```sh
+node scripts/migrate.mjs ~/adamant-pool
 ```
 
-and paste the string:
+Restart the pool after migration.
 
-```bash
-@reboot cd /home/adamant/pool && pm2 start /home/adamant/pool/scripts/start.sh --name "adamantpool"
+### From LowDB to MongoDB
+
+Older v3 development builds stored data in LowDB JSON files. To migrate those files to MongoDB:
+
+```sh
+cd scripts/migrate-lowdb-mongodb
+npm install --ignore-scripts
+MONGODB_URI=mongodb://localhost:27017 LOWDB_STORAGE_PATH=../../server/db node index.js
 ```
 
-## Contribution
+Then set MongoDB connection parameters in `config.jsonc`:
 
-Please have a look at the [CONTRIBUTING.md](./.github/CONTRIBUTING.md)
+```jsonc
+"mongodb": {
+  "uri": "mongodb://localhost:27017",
+  "dbName": "adamant-pool"
+}
+```
+
+Restart the pool after migration.
+
+## Development and Contributing
+
+Read [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup, validation commands, project structure, and pull request rules.
+
+## Links
+
+- [ADAMANT website](https://adamant.im)
+- [ADAMANT apps](https://adamant.im/#adm-apps)
+- [ADAMANT explorer](https://explorer.adamant.im)
+- [ADAMANT Improvement Proposals](https://aips.adamant.im)
+- [Forging article](https://medium.com/adamant-im/earning-money-on-adm-forging-4c7b6eb15516)
+- [List of ADAMANT pools](https://medium.com/adamant-im/hodl-list-of-adamant-pools-join-in-and-get-rewards-491a98610f4b)

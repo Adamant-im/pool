@@ -112,7 +112,9 @@ export default async (db, updateInterval) => {
   };
 
   if (updateInterval && process.env.NODE_ENV !== 'test') {
-    setInterval(async () => await db.write(), updateInterval);
+    const writeInterval = setInterval(async () => await db.write(), updateInterval);
+
+    writeInterval.unref?.();
   }
 
   return db;

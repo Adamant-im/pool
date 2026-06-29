@@ -1,0 +1,16 @@
+node_modules/
+server/node_modules/
+web/node_modules/
+scripts/migrate-lowdb-mongodb/node_modules/
+server/db/
+web/dist/
+coverage/
+logs/
+package-lock.json
+server/package-lock.json
+web/package-lock.json
+scripts/migrate-lowdb-mongodb/package-lock.json
+config.json
+config.jsonc
+config.test.jsonc
+.ai-ignored/

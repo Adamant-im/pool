@@ -17,7 +17,7 @@ try {
 }
 
 server.listen(config.port, () => (
-  log.log(`Pool ${config.address} successfully started a web server.`)
+  log.log(`Pool ${config.address} successfully started the web server.`)
 ));
 
 // Wait for first API health check
@@ -30,6 +30,10 @@ adamantApiClient.onReady(async () => {
   }, UPDATE_BLOCKS_INTERVAL);
 });
 
+/**
+ * Loads delegate data before starting block checks and public status notifications.
+ * @returns {Promise<void>}
+ */
 async function initDelegate() {
   const pool = await store.updateDelegate();
 
@@ -46,7 +50,7 @@ async function initDelegate() {
     `with payouts every _${config.payoutperiod}_. Minimum payout is _${config.minpayout}_ ADM.`;
 
   notifier(
-      `Pool ${config.logName} started on v${config.version} software and listens port ${config.port}. It ${config.infoString}`,
+      `Pool ${config.logName} started on v${config.version} software and listens on port ${config.port}. It ${config.infoString}`,
       'info',
   );
 
