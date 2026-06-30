@@ -76,6 +76,19 @@ function createCollection() {
 
       Object.assign(document, update.$set ?? {});
 
+      for (const [key, value] of Object.entries(update.$inc ?? {})) {
+        document[key] = (document[key] ?? 0) + value;
+      }
+
+      for (const [key, value] of Object.entries(update.$addToSet ?? {})) {
+        if (!Array.isArray(document[key])) {
+          document[key] = [];
+        }
+        if (!document[key].includes(value)) {
+          document[key].push(value);
+        }
+      }
+
       return { acknowledged: true, matchedCount: 1, modifiedCount: 1 };
     },
   };

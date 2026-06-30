@@ -151,6 +151,18 @@ class RewardDistributor {
               `${voter.address}. userWeight: ${userWeightInADM} ADM (${user.percent.toFixed(2)}%).`,
           );
 
+          // Persist this voter's progress on the block right after paying it, so a crash or
+          // retry cannot add the same block reward to the voter twice (see recordVoterOnBlock).
+          try {
+            await this.recordVoterOnBlock(voter.address, user);
+          } catch (error) {
+            log.error(
+                `Failed to record reward progress for ${voter.address} on block ${block.id} ` +
+                `(height ${block.height}): ${error}`,
+            );
+            return;
+          }
+
           distributed.votersCount += 1;
           distributed.rewardsADM += user.reward;
           distributed.percent += user.percent;
@@ -165,23 +177,50 @@ class RewardDistributor {
   }
 
   /**
-   * Stores block-level reward distribution progress.
+   * Atomically records a single voter's reward progress on the block document.
+   *
+   * Called right after the voter's pending reward is stored, so the block always
+   * reflects who has already been paid. `$addToSet` keeps the record idempotent on
+   * retries and `$inc` keeps the block counters correct while voters are distributed
+   * in parallel. This shrinks the duplicate-reward window to the gap between the
+   * voter update and this single block update, instead of the whole distribution run.
+   *
+   * @param {string} address Voter address that was just rewarded on this block
+   * @param {{reward: number, percent: number}} user Reward computed for the voter
+   * @returns {Promise<void>}
+   */
+  async recordVoterOnBlock(address, user) {
+    const { block } = this;
+
+    await mongo.blocksCollection.updateOne(
+        { id: block.id },
+        {
+          $addToSet: { rewardedAddresses: address },
+          $inc: {
+            votersCount: 1,
+            rewardsADM: user.reward,
+            percent: user.percent,
+          },
+        },
+    );
+  }
+
+  /**
+   * Marks the block processed once every eligible voter has been accounted for.
+   *
+   * Per-voter progress (`rewardedAddresses` and counters) is persisted incrementally
+   * in {@link recordVoterOnBlock}, so this only needs to flip the processed flag.
+   *
    * @param {boolean} processed Whether every eligible voter has been accounted for
-   * @returns {Promise<boolean>} Whether the block progress was saved
+   * @returns {Promise<boolean>} Whether the block flag was saved
    */
   async updateBlockDistribution(processed) {
-    const { block, distributed, rewardedAddresses } = this;
+    const { block, distributed } = this;
 
     try {
       await mongo.blocksCollection.updateOne(
           { id: block.id },
-          {
-            $set: {
-              processed,
-              ...distributed,
-              rewardedAddresses: [...rewardedAddresses],
-            },
-          },
+          { $set: { processed } },
       );
 
       log.debug(
