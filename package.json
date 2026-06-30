@@ -40,7 +40,7 @@
     "@commitlint/cli": "^21.1.0",
     "@commitlint/config-conventional": "^21.1.0",
     "husky": "^9.1.7",
-    "prettier": "^3.9.3"
+    "prettier": "^3.9.4"
   },
   "repository": {
     "type": "git",

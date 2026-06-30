@@ -32,7 +32,7 @@
     "@jest/globals": "^30.4.1",
     "@stylistic/eslint-plugin": "^5.10.0",
     "eslint": "^10.6.0",
-    "eslint-plugin-jest": "^29.15.3",
+    "eslint-plugin-jest": "^29.15.4",
     "globals": "^17.7.0",
     "jest": "^30.4.2"
   }
