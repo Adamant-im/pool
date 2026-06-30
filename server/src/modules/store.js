@@ -76,6 +76,10 @@ const store = {
     pendingRewardsADM: 0,
   },
 
+  /**
+   * Refreshes delegate, voters, balance, and period stats in parallel.
+   * @returns {Promise<unknown[]>} Resolves once every update settles
+   */
   updateAll() {
     const updates = [
       this.updateDelegate(),
@@ -87,6 +91,10 @@ const store = {
     return Promise.all(updates);
   },
 
+  /**
+   * Updates forged totals, payout period boundaries, and the aggregate pending rewards shown on the dashboard.
+   * @returns {Promise<void>}
+   */
   async updateStats() {
     try {
       const delegateForgedInfoResponse = await adamantApiClient.getDelegateStats(config.publicKey);
@@ -179,6 +187,11 @@ const store = {
     }
   },
 
+  /**
+   * Reads how many delegates a given account currently votes for.
+   * @param {string} address ADAMANT address of the voter
+   * @returns {Promise<number|undefined>} Number of delegates voted for, or undefined when the lookup fails
+   */
   async updateVotes(address) {
     const getVoteDataResponse = await adamantApiClient.getVoteData(address);
 
@@ -189,6 +202,10 @@ const store = {
     }
   },
 
+  /**
+   * Refreshes the delegate's voter list and each voter's vote count.
+   * @returns {Promise<void>}
+   */
   async updateVoters() {
     const getVotersResponse = await adamantApiClient.getVoters(config.publicKey);
 
@@ -206,6 +223,10 @@ const store = {
     }
   },
 
+  /**
+   * Refreshes the delegate account data and current balance in sats.
+   * @returns {Promise<void>}
+   */
   async updateBalance() {
     const getAccountInfoResponse = await adamantApiClient.getAccountInfo({
       publicKey: config.publicKey,
@@ -225,6 +246,10 @@ const store = {
     }
   },
 
+  /**
+   * Refreshes delegate rank, productivity, and total vote weight.
+   * @returns {Promise<object|undefined>} Updated delegate state, or undefined when the lookup fails
+   */
   async updateDelegate() {
     const getDelegateResponse = await adamantApiClient.getDelegate({
       publicKey: config.publicKey,

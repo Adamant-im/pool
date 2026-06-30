@@ -18,6 +18,12 @@ const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default {
   cronJob: {},
+  /**
+   * Starts the payout cron job for the configured payout period.
+   * @param {string} payoutPeriod Payout period: a day name (e.g. `Mon`) or interval key (`1h`, `1d`, `5d`, `10d`, `15d`, `30d`)
+   * @returns {void}
+   * @throws {Error} When the payout period does not map to a valid cron pattern
+   */
   init(payoutPeriod) {
     try {
       let cronTime;
