@@ -4,6 +4,39 @@ import { adamantApiClient, config, log, utils } from '../helpers/index.js';
 import mongo from '../repository/mongodb/index.js';
 import payoutCron from '../cron/payout.cron.js';
 
+/**
+ * Formats a delegate name consistently for logs and notifications.
+ * @param {string} delegateName Delegate username returned by the node API
+ * @returns {string} Delegate username wrapped in single quotes
+ */
+export function formatDelegateName(delegateName) {
+  return `'${String(delegateName).replaceAll('\'', '\\\'')}'`;
+}
+
+/**
+ * Reads the active delegate position from current and legacy API fields.
+ * @param {object} delegate Delegate data returned by the node API
+ * @param {number} fallbackRank Rank to keep when the API value is missing or invalid
+ * @returns {number} Numeric delegate rank
+ */
+export function normalizeDelegateRank(delegate, fallbackRank = 0) {
+  const rankCandidates = [delegate.rate, delegate.rank, fallbackRank];
+
+  for (const rank of rankCandidates) {
+    if (rank === undefined || rank === null) {
+      continue;
+    }
+
+    const numericRank = Number(rank);
+
+    if (Number.isFinite(numericRank)) {
+      return numericRank;
+    }
+  }
+
+  return 0;
+}
+
 const store = {
   isDistributingRewards: false,
   periodInfo: {
@@ -66,7 +99,7 @@ const store = {
         const totalADM = utils.satsToADM(forged);
 
         log.log(
-            `Updated forged info for delegate ${this.delegate.username}: ` +
+            `Updated forged info for delegate ${formatDelegateName(this.delegate.username)}: ` +
             `total ${totalADM} ADM, ` +
             `block rewards ${rewardsInADM} ADM, ` +
             `fees ${feesInADM} ADM.`,
@@ -185,16 +218,19 @@ const store = {
     });
 
     if (getDelegateResponse.success) {
+      const apiDelegate = getDelegateResponse.delegate;
+
       this.delegate = {
         ...this.delegate,
-        ...getDelegateResponse.delegate,
+        ...apiDelegate,
+        rank: normalizeDelegateRank(apiDelegate, this.delegate.rank),
       };
       this.delegate.votesWeight = +this.delegate.votesWeight;
 
       const votesWeightInADM = utils.satsToADM(this.delegate.votesWeight);
 
       log.log(
-          `Updated delegate ${this.delegate.username}: ` +
+          `Updated delegate ${formatDelegateName(this.delegate.username)}: ` +
           `rank ${this.delegate.rank}, ` +
           `productivity ${this.delegate.productivity}%, ` +
           `votesWeight ${votesWeightInADM} ADM`,

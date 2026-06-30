@@ -4,9 +4,9 @@ import { EXIT_CODE_ERROR, UPDATE_BLOCKS_INTERVAL } from './defines.js';
 import { adamantApiClient, config, log, notifier } from './helpers/index.js';
 import payoutCron from './cron/payout.cron.js';
 
+import store, { formatDelegateName } from './modules/store.js';
 import blocksChecker from './modules/blocks_checker.js';
 import server from './api/index.js';
-import store from './modules/store.js';
 
 log.start();
 
@@ -44,7 +44,7 @@ async function initDelegate() {
     process.exit(EXIT_CODE_ERROR);
   }
 
-  config.logName = `_${config.poolName}_ (${config.address})`;
+  config.logName = `${formatDelegateName(config.poolName)} (${config.address})`;
   config.infoString = `distributes _${config.reward_percentage}_% rewards to voters` +
     `${config.donate_percentage ? ' and donates ' + config.donate_percentage + '% to ADAMANT Foundation' : ''} ` +
     `with payouts every _${config.payoutperiod}_. Minimum payout is _${config.minpayout}_ ADM.`;
