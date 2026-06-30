@@ -326,6 +326,16 @@ p {
   color: #fff;
 }
 
+.mdc-data-table__header-cell--numeric .mdc-data-table__header-cell-wrapper {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.mdc-data-table__header-cell--numeric .mdc-data-table__header-cell-label {
+  text-align: right;
+}
+
 .mdc-data-table__sort-icon-button {
   color: hsla(0,0%,100%,.12);
 }
