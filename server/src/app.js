@@ -41,9 +41,19 @@ secret.on('unlock', () => {
   ));
 });
 
+// Resolves once the startup unlock prompt has been answered (or skipped). Delegate
+// startup waits on this so it cannot exit the process while the operator is still
+// typing the password at the interactive prompt.
+let markUnlockSettled;
+const unlockSettled = new Promise((resolve) => {
+  markUnlockSettled = resolve;
+});
+
 // Wait for first API health check
 adamantApiClient.onReady(async () => {
   setNodeReady(true);
+
+  await unlockSettled;
 
   await initDelegate();
 
@@ -53,7 +63,11 @@ adamantApiClient.onReady(async () => {
   }, UPDATE_BLOCKS_INTERVAL);
 });
 
-await maybeUnlockInteractively();
+try {
+  await maybeUnlockInteractively();
+} finally {
+  markUnlockSettled();
+}
 
 /**
  * Resolves the locked-passphrase state at startup. In a terminal the operator is
@@ -77,7 +91,7 @@ async function maybeUnlockInteractively() {
 
   log.warn('Pool passphrase is encrypted. Enter the operator password to unlock payouts, or press Enter to start LOCKED.');
 
-  const password = await promptHidden('Operator password: ');
+  const password = await promptHidden('Enter the operator password: ');
 
   if (!password) {
     log.warn('No password entered. Pool starting LOCKED. Run `adm-pool unlock` to enable payouts.');
