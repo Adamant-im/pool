@@ -108,7 +108,7 @@ async function maybeUnlockInteractively() {
 
     log.log('Pool unlocked. Payouts and ADM notifications enabled.');
   } catch (error) {
-    log.error(`Unlock failed: ${error.message}. Pool starting LOCKED. Run \`adm-pool unlock\` to retry.`);
+    log.error(`Unlock failed: ${error.message} Pool starting LOCKED. Run \`adm-pool unlock\` to retry.`);
   }
 }
 
