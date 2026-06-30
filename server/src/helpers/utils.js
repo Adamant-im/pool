@@ -26,10 +26,11 @@ export default {
   /**
    * Validates an ADM account address from untrusted input.
    *
-   * The value must be a string shaped like an ADM address (`U` followed by
-   * digits). Rejecting non-strings is what keeps node-supplied values out of
-   * MongoDB query operators (e.g. `{ $ne: null }`) and away from transaction
-   * signing as a payout destination.
+   * The value must be a string shaped like an ADM address (`U` followed by at
+   * least six digits, matching the `adamant-api` SDK validator). Rejecting
+   * non-strings is what keeps node-supplied values out of MongoDB query
+   * operators (e.g. `{ $ne: null }`) and away from transaction signing as a
+   * payout destination.
    * @param {unknown} value Candidate ADM address, typically from a node response or config
    * @return {boolean} True when the value is a syntactically valid ADM address
    */
