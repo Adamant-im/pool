@@ -99,7 +99,7 @@ Older v3 development builds stored data in LowDB JSON files. To migrate those fi
 ```sh
 cd scripts/migrate-lowdb-mongodb
 npm install --ignore-scripts
-MONGODB_URI=mongodb://localhost:27017 LOWDB_STORAGE_PATH=../../server/db node index.js
+MONGODB_URI=mongodb://localhost:27017 MONGODB_DB=adamant-pool LOWDB_STORAGE_PATH=../../server/db node index.js
 ```
 
 Then set MongoDB connection parameters in `config.jsonc`:

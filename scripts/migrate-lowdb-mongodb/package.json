@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "One-time ADAMANT Forging Pool migration from LowDB (v3.0.0) JSON files to MongoDB (v3.1.0+)",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "node --experimental-test-coverage --test-coverage-include=index.js --test-coverage-lines=100 --test-coverage-functions=100 --test-coverage-branches=100 --test"
+  },
   "keywords": [
     "adamant",
     "pool",

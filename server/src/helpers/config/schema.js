@@ -59,7 +59,7 @@ export default {
     type: Object,
     default: {
       origin: '*',
-      credentials: 'true',
+      credentials: true,
     },
   },
   mongodb: {

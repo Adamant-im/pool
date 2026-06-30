@@ -13,8 +13,8 @@ const publicDir = join(__dirname, '../../../web/dist/');
 const app = express();
 
 app.use(cors({
-  origin: config.origin,
-  credentials: config.credentials,
+  origin: config.cors.origin,
+  credentials: config.cors.credentials,
   methods: ['GET'],
 }));
 
