@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500&display=swap');
 
 :root {
-  font-family: Exo 2, sans-serif;
+  font-family: "Exo 2", sans-serif;
   font-size: 16px;
   line-height: 24px;
   font-weight: 400;
@@ -45,6 +45,79 @@ html {
 body {
   background: repeating-linear-gradient(140deg, #191919, #191919 .7px, #212121 0, #212121 5px);
   color: #ffffff;
+}
+
+*,
+::before,
+::after {
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: currentColor;
+}
+
+:root {
+  tab-size: 4;
+}
+
+abbr[title] {
+  text-decoration: underline dotted;
+}
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+b {
+  font-weight: bolder;
+}
+
+body {
+  margin: 0;
+  font-family: inherit;
+  line-height: inherit;
+}
+
+html {
+  line-height: 1.5;
+  font-family: "Exo 2", sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  border-style: solid;
+}
+
+img,
+svg {
+  display: block;
+  vertical-align: middle;
+}
+
+p {
+  margin: 0;
+}
+
+[type="search"] {
+  -webkit-appearance: textfield;
+  outline-offset: -2px;
+}
+
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  height: auto;
+}
+
+::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+::-webkit-file-upload-button {
+  -webkit-appearance: button;
+  font: inherit;
 }
 
 .cursor-pointer {
