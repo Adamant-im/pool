@@ -13,29 +13,14 @@ import readline from 'node:readline';
 export function promptHidden(query) {
   return new Promise((resolve) => {
     const { stdin, stderr } = process;
-    const isTTY = Boolean(stdin.isTTY);
 
-    // Prompts and echo go to stderr so stdout carries only command output.
-    const rl = readline.createInterface({
-      input: stdin,
-      output: stderr,
-      terminal: isTTY,
-    });
+    // Non-interactive fallback: read a line without masking (the input is piped,
+    // so it is not visible anyway). EOF before an answer resolves to ''.
+    if (!stdin.isTTY || typeof stdin.setRawMode !== 'function') {
+      const rl = readline.createInterface({ input: stdin, output: stderr, terminal: false });
 
-    // Resolve to '' if the stream ends before an answer (e.g. EOF on a pipe).
-    rl.on('close', () => resolve(''));
-
-    if (isTTY) {
-      // Mask everything readline would echo; only render the newline on Enter.
-      rl._writeToOutput = (chunk) => {
-        if (chunk === '\r\n' || chunk === '\n' || chunk === '\r') {
-          rl.output.write('\n');
-        }
-      };
-
-      stderr.write(query);
-
-      rl.question('', (answer) => {
+      rl.on('close', () => resolve(''));
+      rl.question(query, (answer) => {
         rl.close();
         resolve(answer);
       });
@@ -43,10 +28,63 @@ export function promptHidden(query) {
       return;
     }
 
-    rl.question(query, (answer) => {
-      rl.close();
-      resolve(answer);
-    });
+    // Interactive: enable raw mode first (disables terminal echo), then render
+    // the prompt and read keystrokes, echoing only a mask so the prompt stays
+    // visible and the secret is never shown.
+    const wasRaw = stdin.isRaw;
+    let input = '';
+
+    stdin.setRawMode(true);
+    stdin.resume();
+    stdin.setEncoding('utf8');
+
+    stderr.write(query);
+
+    const finish = (value) => {
+      stdin.removeListener('data', onData);
+      stdin.setRawMode(wasRaw);
+      stdin.pause();
+      stderr.write('\n');
+      resolve(value);
+    };
+
+    const onData = (chunk) => {
+      for (const char of chunk) {
+        // Enter (CR/LF) or Ctrl-D finishes the input.
+        if (char === '\n' || char === '\r' || char === '\u0004') {
+          finish(input);
+          return;
+        }
+
+        // Ctrl-C aborts.
+        if (char === '\u0003') {
+          stdin.setRawMode(wasRaw);
+          stdin.pause();
+          stderr.write('\n');
+          process.exit(130);
+        }
+
+        // Backspace / Delete removes the last character.
+        if (char === '\u007f' || char === '\b') {
+          if (input.length > 0) {
+            input = input.slice(0, -1);
+            stderr.write('\b \b');
+          }
+
+          continue;
+        }
+
+        // Ignore other control characters (arrows, etc.).
+        if (char < ' ') {
+          continue;
+        }
+
+        input += char;
+        stderr.write('*');
+      }
+    };
+
+    stdin.on('data', onData);
   });
 }
 

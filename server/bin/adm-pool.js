@@ -34,15 +34,15 @@ function printUsage() {
  * @returns {Promise<void>}
  */
 async function cmdEncrypt() {
-  const passphrase = (await prompter.ask('Passphrase: ')).trim();
+  const passphrase = (await prompter.ask('Enter the pool passphrase to encrypt: ')).trim();
 
   if (!passphrase) {
     process.stderr.write('Passphrase cannot be empty.\n');
     process.exit(1);
   }
 
-  const password = await prompter.ask('Operator password: ');
-  const confirm = await prompter.ask('Confirm operator password: ');
+  const password = await prompter.ask('Enter an operator password: ');
+  const confirm = await prompter.ask('Confirm the operator password: ');
 
   if (password !== confirm) {
     process.stderr.write('Operator passwords do not match.\n');
@@ -107,6 +107,41 @@ async function getSocketPath() {
 }
 
 /**
+ * Reports a control-connection error and exits. A missing socket or refused
+ * connection means the pool is not running.
+ * @param {NodeJS.ErrnoException} error Connection error
+ * @param {string} socketPath Control socket path
+ * @returns {never}
+ */
+function reportConnectionError(error, socketPath) {
+  if (error.code === 'ENOENT' || error.code === 'ECONNREFUSED') {
+    process.stderr.write(`Pool is not running or its control socket was not found at ${socketPath}.\n`);
+  } else {
+    process.stderr.write(`Control request failed: ${error.message}\n`);
+  }
+
+  process.exit(1);
+}
+
+/**
+ * Verifies the pool is running by connecting to its control socket.
+ * @param {string} socketPath Control socket path
+ * @returns {Promise<void>} Resolves when the socket accepts a connection
+ */
+function ensureReachable(socketPath) {
+  return new Promise((resolve, reject) => {
+    const socket = net.connect(socketPath);
+
+    socket.on('connect', () => {
+      socket.end();
+      resolve();
+    });
+
+    socket.on('error', (error) => reject(error));
+  });
+}
+
+/**
  * Runs a control command against a running pool, prompting for the password when needed.
  * @param {'unlock'|'lock'|'status'} cmd Control command
  * @param {{needsPassword?: boolean}} [options] Command options
@@ -115,10 +150,20 @@ async function getSocketPath() {
 async function cmdSocket(cmd, { needsPassword = false } = {}) {
   const socketPath = await getSocketPath();
 
+  // Check the pool is up before prompting, so a stopped pool is reported
+  // immediately rather than after the operator has typed the password.
+  if (needsPassword) {
+    try {
+      await ensureReachable(socketPath);
+    } catch (error) {
+      reportConnectionError(error, socketPath);
+    }
+  }
+
   const payload = { cmd };
 
   if (needsPassword) {
-    payload.password = await prompter.ask('Operator password: ');
+    payload.password = await prompter.ask('Enter the operator password: ');
   }
 
   let response;
@@ -126,13 +171,7 @@ async function cmdSocket(cmd, { needsPassword = false } = {}) {
   try {
     response = await sendCommand(socketPath, payload);
   } catch (error) {
-    if (error.code === 'ENOENT' || error.code === 'ECONNREFUSED') {
-      process.stderr.write(`Pool is not running or its control socket was not found at ${socketPath}.\n`);
-    } else {
-      process.stderr.write(`Control request failed: ${error.message}\n`);
-    }
-
-    process.exit(1);
+    reportConnectionError(error, socketPath);
   }
 
   if (!response.ok) {
