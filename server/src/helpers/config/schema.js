@@ -52,6 +52,10 @@ export default {
     default: 'log',
     allowedValues: ['none', 'error', 'warn', 'info', 'log', 'debug'],
   },
+  controlSocket: {
+    type: String,
+    default: null,
+  },
   silent_mode: {
     type: Boolean,
     default: false,

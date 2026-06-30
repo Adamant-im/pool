@@ -5,6 +5,7 @@ import {
   SAT,
 } from '../defines.js';
 import store, { normalizePendingReward } from './store.js';
+import secret from './secret.js';
 
 import { adamantApiClient, config, log, notifier } from '../helpers/index.js';
 import mongo from '../repository/mongodb/index.js';
@@ -27,6 +28,17 @@ class Payer {
    * @returns {Promise<void>}
    */
   async payOut() {
+    // When the passphrase is encrypted and not yet unlocked, the pool cannot
+    // sign transactions. Pending rewards stay in the database and are paid out
+    // once the operator runs `adm-pool unlock`, so nothing is lost.
+    if (!secret.isUnlocked()) {
+      return notifier(
+          `Pool ${config.logName}: Payouts are LOCKED — the encrypted passphrase has not been unlocked. ` +
+          'Run `adm-pool unlock` to enable payouts. Pending rewards are preserved and paid after unlock.',
+          'warn',
+      );
+    }
+
     await this.updateVoters();
 
     const { votersToReward, pendingUserRewards, periodInfo } = this;
@@ -188,7 +200,7 @@ class Payer {
     log.debug(`Preparing payout for ${address}: Pending ${pending.toFixed(8)} ADM, fee ${FEE} ADM.`);
     log.debug(`Processing payment of ${amount.toFixed(8)} ADM reward to ${address}…`);
 
-    const payment = await adamantApiClient.sendTokens(config.passPhrase, address, amount);
+    const payment = await adamantApiClient.sendTokens(secret.getPassphrase(), address, amount);
 
     if (!payment.success) {
       return log.warn(
@@ -275,7 +287,7 @@ class Payer {
             log.debug(`Processing payment of ${logPayAmount} to the maintenance wallet ${config.maintenancewallet}…`);
 
             const paymentMaintenance = await adamantApiClient.sendTokens(
-                config.passPhrase,
+                secret.getPassphrase(),
                 config.maintenancewallet,
                 maintenanceADM - FEE,
             );
@@ -335,7 +347,7 @@ class Payer {
         log.debug(`Processing payment of ${logDonationAmount} to the donation wallet ${config.donatewallet}…`);
 
         const paymentDonate = await adamantApiClient.sendTokens(
-            config.passPhrase,
+            secret.getPassphrase(),
             config.donatewallet,
             donateADM - FEE,
         );

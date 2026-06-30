@@ -14,6 +14,8 @@ This repository is the maintained successor of the older [`adamant-pool`](https:
 - MongoDB-backed block, voter, and transaction history
 - Public dashboard for pool status, voter rewards, and transactions
 - ADAMANT and Slack notifications for operators
+- Optional operator-password-encrypted passphrase with an `adm-pool` control CLI
+- `GET /api/health` endpoint for external monitoring (e.g. Zabbix)
 - Decentralized ADAMANT node access with node failover through `adamant-api`
 - Migration helpers for older LowDB-based pool data
 
@@ -79,6 +81,51 @@ For production, use a process manager such as [`pm2`](https://pm2.keymetrics.io/
 ```sh
 pm2 start ./scripts/start.sh --name adamantpool
 ```
+
+## Securing the passphrase
+
+The `passPhrase` accepts two forms:
+
+- A **plain passphrase** — simplest, but stored in clear text in the config (kept for compatibility, not recommended).
+- An **operator-encrypted passphrase** — the passphrase is encrypted with an operator password and decrypted only in memory at runtime. A leaked config no longer exposes the pool's forging key.
+
+The `adm-pool` control CLI manages encryption and the runtime lock state:
+
+```sh
+npm run adm-pool encrypt   # prompts for the passphrase and an operator password, prints the encrypted value
+npm run adm-pool unlock    # prompts for the operator password and unlocks a running pool
+npm run adm-pool lock      # clears the decrypted passphrase from the running pool's memory
+npm run adm-pool status    # shows the running pool's status
+```
+
+Workflow:
+
+1. Run `npm run adm-pool encrypt` and paste the resulting `admpool-enc-v1....` string into `config.jsonc` as `passPhrase`.
+2. Start the pool. With an encrypted passphrase it boots **LOCKED**: block sync, the web dashboard, and the public API all work, but **payouts and ADM notifications are paused** until you unlock it.
+   - In a **terminal** (`npm start`), the pool prompts for the operator password on startup.
+   - Under **pm2 / systemd** (no terminal), the pool keeps running locked and waits — unlock it from another shell with `npm run adm-pool unlock`.
+3. A payout that falls due while the pool is locked is **deferred**, not lost: pending rewards remain in the database and are processed as soon as you unlock.
+
+The CLI talks to the running pool over a local Unix socket (owner-only `0600` permissions). Override its path with the `controlSocket` config value when running several pools on one host.
+
+## Monitoring
+
+`GET /api/health` returns a secret-free JSON snapshot for external monitoring such as Zabbix:
+
+```jsonc
+{
+  "status": "ok", // ok | degraded (locked) | starting
+  "version": "3.1.0",
+  "uptime": 12345,
+  "address": "U1234...",
+  "payouts": "unlocked", // unlocked | locked
+  "passphrase": "encrypted",
+  "node": { "ready": true, "rank": 12, "productivity": 99.5 },
+  "nextPayoutTimestamp": 1750086400000
+}
+```
+
+The endpoint always responds with HTTP `200` while the web server is up; a locked pool is intentional, not down, so it is reported as `"status": "degraded"` / `"payouts": "locked"` rather than a `5xx`. Alert on `.status != "ok"` or `.payouts == "locked"`.
 
 ## Migrations
 

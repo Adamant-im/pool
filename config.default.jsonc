@@ -14,8 +14,29 @@
   /**
     The pool's secret phrase. The pool's ADM address/account will correspond to this passPhrase.
     The account should be a delegate of the ADAMANT blockchain.
+
+    Two accepted forms:
+      1. A plain passphrase (not recommended; kept for compatibility).
+      2. An operator-encrypted passphrase (recommended). Generate it with:
+           npm run adm-pool encrypt
+         and paste the resulting "admpool-enc-v1...." string here.
+
+    With an encrypted passphrase the pool boots LOCKED: block sync, the web UI,
+    and the public API all work, but payouts and ADM notifications are paused
+    until you unlock it:
+      - In a terminal, the pool prompts for the operator password on start.
+      - Under pm2/systemd (no terminal), the pool keeps running LOCKED; unlock it with:
+           npm run adm-pool unlock
+    Other commands: `adm-pool status`, `adm-pool lock`.
   **/
   "passPhrase": "",
+
+  /**
+    Path to the local control socket used by the `adm-pool` CLI to unlock/lock/
+    inspect the running pool. Leave empty to use a default derived from the port
+    (in the system temp directory).
+  **/
+  "controlSocket": "",
 
   /** Percentage of rewards to distribute to voters **/
   "reward_percentage": 80,
@@ -56,10 +77,17 @@
   /** Whether to include the delegate's own vote in reward distribution **/
   "considerownvote": false,
 
-  /** ADAMANT address for monitoring notifications **/
+  /**
+    ADAMANT address for monitoring notifications.
+    Note: sending an ADAMANT message is signed with the pool passphrase, so while
+    the pool is LOCKED (encrypted passphrase not yet unlocked) ADM notifications
+    are paused — including the "payouts are locked" alert itself. If you use an
+    encrypted passphrase, also configure `slack` below (it does not need the
+    passphrase) so you still receive lock alerts.
+  **/
   "adamant_notify": "",
 
-  /** Slack key for monitoring notifications **/
+  /** Slack key for monitoring notifications (works even while the pool is locked) **/
   "slack": "",
 
   /**
