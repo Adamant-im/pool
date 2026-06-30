@@ -3,6 +3,9 @@
   "version": "3.1.0",
   "description": "ADAMANT delegate forging pool with automated voter rewards, payouts, and dashboard",
   "main": "server/src/app.js",
+  "bin": {
+    "adm-pool": "server/bin/adm-pool.js"
+  },
   "scripts": {
     "start": "node .",
     "adm-pool": "node server/bin/adm-pool.js",
