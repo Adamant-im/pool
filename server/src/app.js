@@ -27,6 +27,13 @@ server.listen(config.port, () => (
 // Local control channel backing `adm-pool unlock`, `lock`, and `status`.
 const { socketPath } = startControlServer();
 
+if (secret.status().mode === 'plain') {
+  log.warn(
+      `Pool ${config.address} is using a PLAIN passphrase stored in the config file. ` +
+      'For better security, encrypt it with `adm-pool encrypt` and unlock with `adm-pool unlock`.',
+  );
+}
+
 // When the pool is unlocked, process any payout that fell due during the lock.
 secret.on('unlock', () => {
   payoutCron.runDeferred().catch((error) => (

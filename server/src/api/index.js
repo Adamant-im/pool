@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { buildHealth } from '../modules/health.js';
 import config from '../helpers/config/reader.js';
 import mongo from '../repository/mongodb/index.js';
+import secret from '../modules/secret.js';
 import store from '../modules/store.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -62,6 +63,8 @@ app.get('/api/config', async (req, res) => res.send({
   reward_percentage: config.reward_percentage,
   donate_percentage: config.donate_percentage,
   minpayout: config.minpayout,
+  // True while an encrypted passphrase has not been unlocked, so payouts are paused.
+  locked: secret.status().locked,
   payoutperiod: config.payoutperiod,
   payoutperiodForged: store.periodInfo.totalForgedADM,
   payoutperiodRewards: store.delegate.pendingRewardsADM,

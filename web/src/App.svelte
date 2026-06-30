@@ -73,6 +73,9 @@
           {store?.delegate.username}
         </a>
       </b>
+      {#if system?.locked}
+        <span class="text-amber-600">(waiting for password to unlock payouts…)</span>
+      {/if}
       distributes {system?.reward_percentage}% rewards to
       voters {system?.donate_percentage ? `and donates ${system?.donate_percentage}% to ADAMANT developer community` : '' } with
       payouts every {system?.payoutperiod}. Minimum payout is {system?.minpayout} ADM.
