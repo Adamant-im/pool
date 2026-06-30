@@ -3,6 +3,7 @@ import cors from 'cors';
 import express from 'express';
 import { fileURLToPath } from 'url';
 
+import { buildHealth } from '../modules/health.js';
 import config from '../helpers/config/reader.js';
 import mongo from '../repository/mongodb/index.js';
 import store from '../modules/store.js';
@@ -30,6 +31,13 @@ app.use(/\.js/, (req, res, next) => {
 app.use('/', express.static(publicDir));
 
 app.get('/', (req, res) => res.sendFile(join(publicDir, 'index.html')));
+
+// Machine-readable health snapshot for external monitoring (e.g. Zabbix).
+// Always HTTP 200 while the web server is up; the operational state lives in
+// the `status` field (`ok` | `degraded` | `starting`) and `payouts`
+// (`unlocked` | `locked`). A locked pool is intentional, not "down", so it is
+// not signalled with a 5xx. Exposes no secrets and accepts no input.
+app.get('/api/health', (req, res) => res.send(buildHealth()));
 
 // Returns all recorded payout transactions.
 app.get('/api/transactions', async (req, res) => {

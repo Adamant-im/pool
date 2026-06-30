@@ -1,5 +1,4 @@
 import * as process from 'node:process';
-import { createAddressFromPublicKey, createKeypairFromPassphrase } from 'adamant-api';
 import fs from 'fs';
 import jsonminify from 'jsonminify';
 
@@ -8,6 +7,9 @@ import { fileURLToPath } from 'url';
 
 import configSchema from './schema.js';
 import validateConfig from './validate.js';
+
+import { deriveIdentity, isEncrypted, parseHeader } from '../crypto/passphrase.js';
+import secret from '../../modules/secret.js';
 
 import { EXIT_CODE_ERROR, MIN_PAYOUT } from '../../defines.js';
 
@@ -71,17 +73,33 @@ if (!config.passPhrase) {
   exit('Pool\'s config is wrong. No passPhrase. Cannot start Pool.');
 }
 
-let keysPair;
+let publicKey;
+let address;
 
-try {
-  keysPair = createKeypairFromPassphrase(config.passPhrase);
-} catch (error) {
-  exit('Pool\'s config is wrong. Invalid passPhrase. Cannot start Pool. Error: ', error);
+// The passPhrase is either a plain phrase (derive the keypair now) or an
+// operator-encrypted blob (read the public identity from its header and stay
+// LOCKED until `adm-pool unlock`). Detection is deterministic, never heuristic.
+if (isEncrypted(config.passPhrase)) {
+  try {
+    const header = parseHeader(config.passPhrase);
+    publicKey = header.publicKey;
+    address = header.address;
+  } catch (error) {
+    exit('Pool\'s config is wrong. Invalid encrypted passPhrase. Cannot start Pool. Error: ', error);
+  }
+
+  secret.initEncrypted(config.passPhrase);
+} else {
+  try {
+    ({ publicKey, address } = deriveIdentity(config.passPhrase));
+  } catch (error) {
+    exit('Pool\'s config is wrong. Invalid passPhrase. Cannot start Pool. Error: ', error);
+  }
+
+  secret.initPlain(config.passPhrase, publicKey, address);
 }
 
-const address = createAddressFromPublicKey(keysPair.publicKey);
-
-config.publicKey = keysPair.publicKey.toString('hex');
+config.publicKey = publicKey;
 config.address = address;
 
 // Until the delegate is fetched, identify the pool by address only — the account
@@ -106,7 +124,10 @@ if (config.poolsShare < 0) {
 
 config.payoutperiod = config.payoutperiod[0].toUpperCase() + config.payoutperiod.slice(1).toLowerCase();
 
-console.info(`Pool ${address} successfully read config file (${loadedConfigPath ? loadedConfigPath : 'default'}).`);
+// The `adm-pool` CLI imports this module only to resolve config; keep its output clean.
+if (!process.env.ADM_POOL_CLI) {
+  console.info(`Pool ${address} successfully read config file (${loadedConfigPath ? loadedConfigPath : 'default'}).`);
+}
 
 /**
  * Logs fatal config errors and terminates the process.

@@ -5,6 +5,7 @@
   "main": "server/src/app.js",
   "scripts": {
     "start": "node .",
+    "adm-pool": "node server/bin/adm-pool.js",
     "prepare": "husky",
     "install:all": "npm install --ignore-scripts && npm --prefix ./server install --ignore-scripts && npm --prefix ./web install --ignore-scripts && npm --prefix ./scripts/migrate-lowdb-mongodb install --ignore-scripts",
     "test": "npm --prefix ./server run test",

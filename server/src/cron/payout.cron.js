@@ -2,6 +2,7 @@ import { CronJob } from 'cron';
 import Payer from '../modules/pay_out.js';
 import config from '../helpers/config/reader.js';
 import log from '../helpers/log.js';
+import secret from '../modules/secret.js';
 
 const payer = new Payer();
 
@@ -18,6 +19,9 @@ const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default {
   cronJob: {},
+  // Set when a scheduled payout fires while the pool is locked, so the deferred
+  // run can be processed on `adm-pool unlock` (see runDeferred).
+  deferredPayout: false,
   /**
    * Starts the payout cron job for the configured payout period.
    * @param {string} payoutPeriod Payout period: a day name (e.g. `Mon`) or interval key (`1h`, `1d`, `5d`, `10d`, `15d`, `30d`)
@@ -38,7 +42,7 @@ export default {
 
       this.cronJob = CronJob.from({
         cronTime,
-        onTick: payer.payOut.bind(payer),
+        onTick: () => this.runScheduled(),
         start: false,
         name: 'payout',
       });
@@ -54,6 +58,37 @@ export default {
 
       throw error;
     }
+  },
+
+  /**
+   * Runs a scheduled payout. When the pool is locked, the run is recorded as
+   * deferred (so it can be picked up on unlock) before the payer reports the
+   * locked state.
+   * @returns {Promise<void>}
+   */
+  async runScheduled() {
+    if (!secret.isUnlocked()) {
+      this.deferredPayout = true;
+    }
+
+    await payer.payOut();
+  },
+
+  /**
+   * Processes a payout that was due while the pool was locked. No-op when no
+   * scheduled run was missed.
+   * @returns {Promise<void>}
+   */
+  async runDeferred() {
+    if (!this.deferredPayout) {
+      return;
+    }
+
+    this.deferredPayout = false;
+
+    log.info('Processing reward payouts that were deferred while the pool was locked.');
+
+    await payer.payOut();
   },
 };
 

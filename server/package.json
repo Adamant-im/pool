@@ -5,8 +5,12 @@
   "description": "Backend runtime for ADAMANT Forging Pool rewards, payouts, storage, notifications, and HTTP API",
   "main": "src/app.js",
   "type": "module",
+  "bin": {
+    "adm-pool": "bin/adm-pool.js"
+  },
   "scripts": {
     "start": "node src/app.js",
+    "adm-pool": "node bin/adm-pool.js",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --silent --forceExit"

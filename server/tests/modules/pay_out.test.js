@@ -35,6 +35,14 @@ jest.unstable_mockModule('../../src/helpers/index.js', () => ({
   notifier,
 }));
 
+jest.unstable_mockModule('../../src/modules/secret.js', () => ({
+  __esModule: true,
+  default: {
+    isUnlocked: () => true,
+    getPassphrase: () => 'test passphrase',
+  },
+}));
+
 jest.unstable_mockModule('../../src/modules/store.js', () => ({
   __esModule: true,
   default: {

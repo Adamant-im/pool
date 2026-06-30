@@ -5,7 +5,11 @@ import { adamantApiClient, config, log, notifier } from './helpers/index.js';
 import payoutCron from './cron/payout.cron.js';
 
 import blocksChecker from './modules/blocks_checker.js';
+import { promptHidden } from './helpers/prompt.js';
+import secret from './modules/secret.js';
 import server from './api/index.js';
+import { setNodeReady } from './modules/health.js';
+import { startControlServer } from './api/control.js';
 import store from './modules/store.js';
 
 log.start();
@@ -20,8 +24,20 @@ server.listen(config.port, () => (
   log.log(`Pool ${config.address} successfully started the web server on port ${config.port}.`)
 ));
 
+// Local control channel backing `adm-pool unlock`, `lock`, and `status`.
+const { socketPath } = startControlServer();
+
+// When the pool is unlocked, process any payout that fell due during the lock.
+secret.on('unlock', () => {
+  payoutCron.runDeferred().catch((error) => (
+    log.error(`Failed to process deferred payouts after unlock: ${error}`)
+  ));
+});
+
 // Wait for first API health check
 adamantApiClient.onReady(async () => {
+  setNodeReady(true);
+
   await initDelegate();
 
   await blocksChecker();
@@ -29,6 +45,47 @@ adamantApiClient.onReady(async () => {
     await blocksChecker();
   }, UPDATE_BLOCKS_INTERVAL);
 });
+
+await maybeUnlockInteractively();
+
+/**
+ * Resolves the locked-passphrase state at startup. In a terminal the operator is
+ * prompted for the password; under a service manager (pm2/systemd, no TTY) the
+ * pool keeps running LOCKED and waits for `adm-pool unlock` over the control socket.
+ * @returns {Promise<void>}
+ */
+async function maybeUnlockInteractively() {
+  if (secret.status().mode !== 'encrypted' || secret.isUnlocked()) {
+    return;
+  }
+
+  if (!process.stdin.isTTY) {
+    log.warn(
+        `Pool ${config.address} started LOCKED — the passphrase is encrypted and no terminal is attached. ` +
+        `Payouts and ADM notifications are paused. Run \`adm-pool unlock\` (control socket: ${socketPath}).`,
+    );
+
+    return;
+  }
+
+  log.warn('Pool passphrase is encrypted. Enter the operator password to unlock payouts, or press Enter to start LOCKED.');
+
+  const password = await promptHidden('Operator password: ');
+
+  if (!password) {
+    log.warn('No password entered. Pool starting LOCKED. Run `adm-pool unlock` to enable payouts.');
+
+    return;
+  }
+
+  try {
+    secret.unlock(password);
+
+    log.log('Pool unlocked. Payouts and ADM notifications enabled.');
+  } catch (error) {
+    log.error(`Unlock failed: ${error.message}. Pool starting LOCKED. Run \`adm-pool unlock\` to retry.`);
+  }
+}
 
 /**
  * Loads delegate data before starting block checks and public status notifications.

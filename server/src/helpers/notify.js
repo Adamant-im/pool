@@ -2,6 +2,7 @@ import adamantApiClient from './adamantApiClient.js';
 import axios from 'axios';
 import config from './config/reader.js';
 import log from './log.js';
+import secret from '../modules/secret.js';
 
 const {
   adamant_notify: adamantNotify,
@@ -54,10 +55,14 @@ export default (message, type, silentMode = false) => {
             });
       }
 
-      if (adamantNotify && adamantNotify.length > 5 && adamantNotify.startsWith('U') && config.passPhrase && config.passPhrase.length > 30) {
+      // ADM notifications require signing, so they are sent only while unlocked.
+      // Slack (above) keeps working when the pool is locked.
+      const passPhrase = secret.getPassphrase();
+
+      if (adamantNotify && adamantNotify.length > 5 && adamantNotify.startsWith('U') && passPhrase && passPhrase.length > 30) {
         const mdMessage = makeBoldForMarkdown(message);
 
-        adamantApiClient.sendMessage(config.passPhrase, adamantNotify, `${type}| ${mdMessage}`)
+        adamantApiClient.sendMessage(passPhrase, adamantNotify, `${type}| ${mdMessage}`)
             .then((response) => {
               if (!response.success) {
                 log.warn(`Failed to send notification message '${mdMessage}' to ${adamantNotify}. ${response.errorMessage}.`);
