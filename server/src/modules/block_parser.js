@@ -1,7 +1,7 @@
 import RewardDistributor from './distribute_rewards.js';
 
-import {dbBlocks} from '../helpers/DB.js';
-import {log} from '../helpers/index.js';
+import { log } from '../helpers/index.js';
+import mongo from '../repository/mongodb/index.js';
 
 class QueueNode {
   constructor(value) {
@@ -30,7 +30,7 @@ class BlockParser {
   }
 
   enqueue(block) {
-    const {id} = block;
+    const { id } = block;
 
     if (!this.queued(id)) {
       const node = new QueueNode(block);
@@ -50,7 +50,7 @@ class BlockParser {
 
   dequeue() {
     if (!this.isEmpty) {
-      const {value: block} = this.head;
+      const { value: block } = this.head;
 
       delete this.queue[block.id];
 
@@ -90,32 +90,39 @@ class BlockParser {
   }
 
   async parse(block) {
-    const {id} = block;
+    const { id, height } = block;
 
-    const savedBlock = await dbBlocks.findOne({id});
+    const rewardDistributor = new RewardDistributor(block);
 
-    const rewardDistributer = new RewardDistributor(block);
+    let savedBlock;
+    try {
+      savedBlock = await mongo.blocksCollection.findOne({ id });
+    } catch (error) {
+      log.error(`Failed to parse block ${id} with height ${height}: ${error}`);
+      return;
+    }
 
     if (savedBlock) {
       if (!savedBlock.processed) {
-        log.info(`Re-trying to distribute rewards for block ${block.id} (height ${block.height})…`);
+        log.info(`Re-trying to distribute rewards for block ${id} (height ${height})…`);
 
-        return rewardDistributer.distribute();
+        await rewardDistributor.distribute();
       }
     } else {
-      log.info(`New block forged: ${block.id} (height ${block.height}).`);
+      log.info(`New block forged: ${id} (height ${height}).`);
 
-      const insertBlock = await dbBlocks.insert(block);
-
-      if (insertBlock) {
-        log.info(
-            `Block successfully saved: ${block.id} (height ${block.height}). Distributing rewards…`,
-        );
-
-        return rewardDistributer.distribute();
-      } else {
-        log.warn(`Failed to save block ${block.id} (height ${block.height}).`);
+      try {
+        await mongo.blocksCollection.insertOne(block);
+      } catch (error) {
+        log.error(`Failed to parse block ${id} with height ${height}: ${error}`);
+        return;
       }
+
+      log.info(
+          `Block successfully saved: ${id} (height ${height}). Distributing rewards…`,
+      );
+
+      await rewardDistributor.distribute();
     }
   }
 }

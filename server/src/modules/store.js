@@ -1,6 +1,41 @@
-import {api, utils, config, log} from '../helpers/index.js';
-import {dbVoters, dbTrans, dbBlocks} from '../helpers/DB.js';
-import {UPDATE_DELEGATE_INTERVAL, SAT} from '../helpers/const.js';
+import * as process from 'node:process';
+import { SAT, UPDATE_DELEGATE_INTERVAL } from '../defines.js';
+import { adamantApiClient, config, log, utils } from '../helpers/index.js';
+import mongo from '../repository/mongodb/index.js';
+import payoutCron from '../cron/payout.cron.js';
+
+/**
+ * Formats a delegate name consistently for logs and notifications.
+ * @param {string} delegateName Delegate username returned by the node API
+ * @returns {string} Delegate username wrapped in single quotes
+ */
+export function formatDelegateName(delegateName) {
+  return `'${String(delegateName).replaceAll('\'', '\\\'')}'`;
+}
+
+/**
+ * Reads the active delegate position from current and legacy API fields.
+ * @param {object} delegate Delegate data returned by the node API
+ * @param {number} fallbackRank Rank to keep when the API value is missing or invalid
+ * @returns {number} Numeric delegate rank
+ */
+export function normalizeDelegateRank(delegate, fallbackRank = 0) {
+  const rankCandidates = [delegate.rate, delegate.rank, fallbackRank];
+
+  for (const rank of rankCandidates) {
+    if (rank === undefined || rank === null) {
+      continue;
+    }
+
+    const numericRank = Number(rank);
+
+    if (Number.isFinite(numericRank)) {
+      return numericRank;
+    }
+  }
+
+  return 0;
+}
 
 const store = {
   isDistributingRewards: false,
@@ -43,16 +78,14 @@ const store = {
 
   async updateStats() {
     try {
-      const delegateForgedInfo = await api.get('delegates/forging/getForgedByAccount', {
-        generatorPublicKey: config.publicKey,
-      });
+      const delegateForgedInfoResponse = await adamantApiClient.getDelegateStats(config.publicKey);
 
-      if (delegateForgedInfo.success) {
+      if (delegateForgedInfoResponse.success) {
         const {
           forged,
           rewards,
           fees,
-        } = delegateForgedInfo.data;
+        } = delegateForgedInfoResponse;
 
         this.delegate = {
           ...this.delegate,
@@ -66,7 +99,7 @@ const store = {
         const totalADM = utils.satsToADM(forged);
 
         log.log(
-            `Updated forged info for delegate ${this.delegate.username}: ` +
+            `Updated forged info for delegate ${formatDelegateName(this.delegate.username)}: ` +
             `total ${totalADM} ADM, ` +
             `block rewards ${rewardsInADM} ADM, ` +
             `fees ${feesInADM} ADM.`,
@@ -74,13 +107,11 @@ const store = {
       } else {
         log.warn(
             `Failed to get forged info for delegate for ${config.address}. ` +
-            `${delegateForgedInfo.errorMessage}.`,
+            `${delegateForgedInfoResponse.errorMessage}.`,
         );
       }
 
-      const cron = (await import('../helpers/cron.js')).default.payoutCronJob;
-
-      const nextRunMoment = cron.nextDate();
+      const nextRunMoment = payoutCron.cronJob.nextDate();
 
       this.periodInfo = {
         ...this.periodInfo,
@@ -89,7 +120,7 @@ const store = {
         nextRunDateString: nextRunMoment.toISODate(),
       };
 
-      const transactions = await dbTrans.find({});
+      const transactions = await mongo.transactionsCollection.find({}).toArray();
 
       // Assume previous run is the last saved transaction
       const lastTransaction = transactions.sort((a, b) => b.timeStamp - a.timeStamp)[0];
@@ -104,9 +135,13 @@ const store = {
         };
       }
 
-      const periodBlocks = await dbBlocks.find(({timestamp}) => (
-        timestamp > this.periodInfo.previousRunEpochtime
-      ));
+      const periodBlocks = await mongo.blocksCollection.find(
+          {
+            timestamp: {
+              $gte: this.periodInfo.previousRunEpochtime,
+            },
+          },
+      ).toArray();
 
       if (periodBlocks) {
         const totalForgedSats = periodBlocks.reduce((sum, block) => sum + (+block.totalForged), 0);
@@ -124,7 +159,7 @@ const store = {
         };
       }
 
-      const voters = await dbVoters.find({});
+      const voters = await mongo.votersCollection.find({}).toArray();
 
       this.delegate.pendingRewardsADM = voters.reduce((sum, voter) => sum + voter.pending, 0);
     } catch (error) {
@@ -133,26 +168,20 @@ const store = {
   },
 
   async updateVotes(address) {
-    const votes = await api.get('accounts/delegates', {
-      address,
-    });
+    const getVoteDataResponse = await adamantApiClient.getVoteData(address);
 
-    if (votes.success) {
-      const votesCount = votes.data.delegates.length;
-
-      return votesCount;
+    if (getVoteDataResponse.success) {
+      return getVoteDataResponse.delegates.length;
     } else {
-      log.warn(`Failed to get votes for ${address}. ${votes.errorMessage}.`);
+      log.warn(`Failed to get votes for ${address}. ${getVoteDataResponse.errorMessage}.`);
     }
   },
 
   async updateVoters() {
-    const voters = await api.get('delegates/voters', {
-      publicKey: config.publicKey,
-    });
+    const getVotersResponse = await adamantApiClient.getVoters(config.publicKey);
 
-    if (voters.success) {
-      this.delegate.voters = voters.data.accounts;
+    if (getVotersResponse.success) {
+      this.delegate.voters = getVotersResponse.accounts;
 
       for (const voter of this.delegate.voters) {
         voter.votesCount = await this.updateVotes(voter.address);
@@ -160,45 +189,48 @@ const store = {
 
       log.log(`Updated voters: ${this.delegate.voters.length} accounts`);
     } else {
-      log.warn(`Failed to get voters for ${config.address}. ${voters.errorMessage}.`);
+      log.warn(`Failed to get voters for ${config.address}. ${getVotersResponse.errorMessage}.`);
     }
   },
 
   async updateBalance() {
-    const account = await api.get('accounts', {
+    const getAccountInfoResponse = await adamantApiClient.getAccountInfo({
       publicKey: config.publicKey,
     });
 
-    if (account.success) {
+    if (getAccountInfoResponse.success) {
       this.delegate = {
         ...this.delegate,
-        ...account.data.account,
+        ...getAccountInfoResponse.account,
       };
 
       this.delegate.balance = +this.delegate.balance;
 
       log.log(`Updated balance: ${utils.satsToADM(this.delegate.balance)} ADM`);
     } else {
-      log.warn(`Failed to get account data for ${config.address}. ${account.errorMessage}.`);
+      log.warn(`Failed to get account data for ${config.address}. ${getAccountInfoResponse.errorMessage}.`);
     }
   },
 
   async updateDelegate() {
-    const delegate = await api.get('delegates/get', {
+    const getDelegateResponse = await adamantApiClient.getDelegate({
       publicKey: config.publicKey,
     });
 
-    if (delegate.success) {
+    if (getDelegateResponse.success) {
+      const apiDelegate = getDelegateResponse.delegate;
+
       this.delegate = {
         ...this.delegate,
-        ...delegate.data.delegate,
+        ...apiDelegate,
+        rank: normalizeDelegateRank(apiDelegate, this.delegate.rank),
       };
       this.delegate.votesWeight = +this.delegate.votesWeight;
 
       const votesWeightInADM = utils.satsToADM(this.delegate.votesWeight);
 
       log.log(
-          `Updated delegate ${this.delegate.username}: ` +
+          `Updated delegate ${formatDelegateName(this.delegate.username)}: ` +
           `rank ${this.delegate.rank}, ` +
           `productivity ${this.delegate.productivity}%, ` +
           `votesWeight ${votesWeightInADM} ADM`,
@@ -206,7 +238,7 @@ const store = {
 
       return this.delegate;
     } else {
-      log.warn(`Failed to get delegate for ${config.address}. ${delegate.errorMessage}.`);
+      log.warn(`Failed to get delegate for ${config.address}. ${getDelegateResponse.errorMessage}.`);
     }
   },
 };

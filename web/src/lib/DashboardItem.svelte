@@ -8,7 +8,7 @@
   <div class={`text-secondary ${isSmall ? 'text-sm' : ''}`}>
     {name}
   </div>
-  <div class="text-{isSmall ? 2 : 3}xl flex items-center gap-1">
+  <div class={isSmall ? 'text-2xl flex items-center gap-1' : 'text-3xl flex items-center gap-1'}>
     {value} {isADM ? 'ADM': ''}
 
     {#if needAttention}
@@ -18,15 +18,3 @@
     {/if}
   </div>
 </div>
-
-<style windi:safelist>
-  .text-2xl {
-    font-size: 1.5rem;
-    line-height: 2rem;
-  }
-
-  .text-3xl {
-    font-size: 1.875rem;
-    line-height: 2.25rem;
-  }
-</style>

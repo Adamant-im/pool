@@ -23,7 +23,7 @@
   ];
 </script>
 
-<footer class="flex flex-wrap px-4 gap-4 justify-around py-10 text-center <sm:flex-col">
+<footer class="footer-links flex flex-wrap px-4 gap-4 justify-around py-10 text-center">
   {#each links as link (link.url)}
     <a
       href={link.url}

@@ -1,24 +1,24 @@
 const baseURL = import.meta.env.VITE_BASE_URL;
 
-export const request = (methodName) => {
+export const request = async (methodName) => {
   const controller = new AbortController();
 
   const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-  const response = fetch(`${baseURL}/${methodName}`, {
-    signal: controller.signal,
-  }).then((res) => res.json());
+  const response = await fetch(`${baseURL}/${methodName}`, { signal: controller.signal });
+
+  const json = await response.json();
 
   clearTimeout(timeoutId);
 
-  return response;
+  return json;
 };
 
 export function getAll() {
   return Promise.all([
-    request('get-voters'),
-    request('get-transactions'),
-    request('get-delegate'),
-    request('get-config'),
+    request('voters'),
+    request('transactions'),
+    request('delegate'),
+    request('config'),
   ]);
 }

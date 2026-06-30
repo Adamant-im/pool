@@ -1,34 +1,24 @@
 import BlockParser from './block_parser.js';
 
-import {api, config, log} from '../helpers/index.js';
-import {UPDATE_BLOCKS_INTERVAL} from '../helpers/const.js';
+import { adamantApiClient, config, log } from '../helpers/index.js';
 
 const blockParser = new BlockParser();
 
-async function getBlocks() {
+async function checkBlocks() {
   try {
-    // FIX ME: use generatorPublicKey parameter instead of filtering
-    const blocks = await api.get('blocks', {limit: 100});
+    const getBlocksResponse = await adamantApiClient.getBlocks({ limit: 100, generatorPublicKey: config.publicKey });
 
-    if (blocks.success) {
-      const delegateBlocks = blocks.data.blocks.filter(
-          (block) => block.generatorPublicKey === config.publicKey,
-      );
+    if (getBlocksResponse.success) {
+      const { blocks } = getBlocksResponse;
+      blocks.forEach((block) => blockParser.enqueue(block));
 
-      delegateBlocks.forEach((block) => blockParser.enqueue(block));
-
-      blockParser.run();
+      await blockParser.run();
     } else {
-      log.warn(`Failed to get blocks. ${blocks.errorMessage}.`);
+      log.warn(`Failed to get blocks. ${getBlocksResponse.errorMessage}.`);
     }
   } catch (error) {
     log.error(`Error while checking new blocks: ${error}`);
   }
 }
 
-export default () => {
-  getBlocks();
-  if (process.env.NODE_ENV !== 'test') {
-    setInterval(getBlocks, UPDATE_BLOCKS_INTERVAL);
-  }
-};
+export default checkBlocks;

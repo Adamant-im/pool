@@ -5,7 +5,7 @@
   import {Label} from '@smui/common';
   import Select, {Option} from '@smui/select';
 
-  import {formatDate, formatNumber, sortBy} from '../utils.js';
+  import {formatDate, formatNumber, sortBy, splitWholeDecimalNumberParts} from '../utils.js';
 
   export let rows = [];
 
@@ -26,6 +26,12 @@
     transactions = sortBy(sortDirection, sort, transactions);
   }
 </script>
+
+<style>
+  .bold-white {
+    font-weight: bold;
+  }
+</style>
 
 <div class="max-w-280 w-full mt-6">
   <div class="text-xl flex gap-2 items-end mb-4">
@@ -76,9 +82,34 @@
       {#each slice as item, index}
         <Row>
           <Cell numeric>{index + 1 + currentPage * rowsPerPage}</Cell>
-          <Cell>{item.address}</Cell>
-          <Cell>{item.transactionId}</Cell>
-          <Cell>{formatNumber(item.payoutcount)}</Cell>
+          <Cell>
+            <a
+                    href={`https://explorer.adamant.im/address/${item.address}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Address details"
+            >
+              { item.address }
+            </a>
+          </Cell>
+          <Cell>
+            <a
+                    href={`https://explorer.adamant.im/tx/${item.transactionId}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Transaction details"
+            >
+              { item.transactionId }
+            </a>
+          </Cell>
+          <Cell numeric>
+            {@const formatted = splitWholeDecimalNumberParts(formatNumber(item.payoutcount))}
+            {#if formatted.decimal}
+              <span class="bold-white">{formatted.whole}</span><span>{formatted.decimal}</span>
+            {:else}
+              <span class="bold-white">{formatted.whole}</span>
+            {/if}
+          </Cell>
           <Cell>{formatDate(item.timeStamp)?.YYYY_MM_DD_hh_mm}</Cell>
         </Row>
       {/each}

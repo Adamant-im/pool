@@ -1,18 +1,19 @@
-import jsonminify from 'jsonminify';
-import keys from 'adamant-api/src/helpers/keys.js';
+import * as process from 'node:process';
+import { createAddressFromPublicKey, createKeypairFromPassphrase } from 'adamant-api';
 import fs from 'fs';
+import jsonminify from 'jsonminify';
 
-import {join, dirname} from 'path';
-import {fileURLToPath} from 'url';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 
-import validateConfig from './validate.js';
 import configSchema from './schema.js';
+import validateConfig from './validate.js';
 
-import {MIN_PAYOUT} from '../const.js';
+import { EXIT_CODE_ERROR, MIN_PAYOUT } from '../../defines.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const {version} = JSON.parse(
+const { version } = JSON.parse(
     fs.readFileSync(join(__dirname, '../../../../package.json'), 'utf-8'),
 );
 
@@ -20,6 +21,11 @@ const getFullConfigPath = (configPath) => (
   join(__dirname, '../../../../', configPath)
 );
 
+/**
+ * Loads and parses a JSONC config file relative to the repository root.
+ * @param {string} configPath Config path relative to the repository root
+ * @returns {object} Parsed configuration object
+ */
 const loadConfig = (configPath) => {
   return JSON.parse(jsonminify(
       fs.readFileSync(getFullConfigPath(configPath), 'utf-8'),
@@ -58,22 +64,22 @@ for (const configPath of configPaths) {
 config.version = version;
 
 if (!config.node_ADM) {
-  exit(`Pool's config is wrong. ADM nodes are not set. Cannot start Pool.`);
+  exit('Pool\'s config is wrong. ADM nodes are not set. Cannot start Pool.');
 }
 
 if (!config.passPhrase) {
-  exit(`Pool's config is wrong. No passPhrase. Cannot start Pool.`);
+  exit('Pool\'s config is wrong. No passPhrase. Cannot start Pool.');
 }
 
 let keysPair;
 
 try {
-  keysPair = keys.createKeypairFromPassPhrase(config.passPhrase);
+  keysPair = createKeypairFromPassphrase(config.passPhrase);
 } catch (error) {
   exit('Pool\'s config is wrong. Invalid passPhrase. Cannot start Pool. Error: ', error);
 }
 
-const address = keys.createAddressFromPublicKey(keysPair.publicKey);
+const address = createAddressFromPublicKey(keysPair.publicKey);
 
 config.publicKey = keysPair.publicKey.toString('hex');
 config.address = address;
@@ -85,7 +91,7 @@ if (errorMessage) {
 }
 
 if (config.minpayout < MIN_PAYOUT) {
-  exit(`Pool's ${address} config is wrong. Parameter minpayout cannot be less, than ${MIN_PAYOUT} (ADM). Cannot start Pool.`);
+  exit(`Pool's ${address} config is wrong. Parameter minpayout cannot be lower than ${MIN_PAYOUT} ADM. Cannot start Pool.`);
 }
 
 config.poolsShare = 100 - config.reward_percentage - config.donate_percentage;
@@ -96,11 +102,16 @@ if (config.poolsShare < 0) {
 
 config.payoutperiod = config.payoutperiod[0].toUpperCase() + config.payoutperiod.slice(1).toLowerCase();
 
-console.info(`Pool ${address} successfully read a config-file (${loadedConfigPath ? loadedConfigPath : 'default'}).`);
+console.info(`Pool ${address} successfully read config file (${loadedConfigPath ? loadedConfigPath : 'default'}).`);
 
+/**
+ * Logs fatal config errors and terminates the process.
+ * @param {...unknown} errorMessages Error message parts to print
+ * @returns {never}
+ */
 function exit(...errorMessages) {
   console.error(...errorMessages);
-  process.exit(-1);
+  process.exit(EXIT_CODE_ERROR);
 }
 
 export default config;

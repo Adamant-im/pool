@@ -55,4 +55,18 @@ export default {
     type: Boolean,
     default: false,
   },
+  cors: {
+    type: Object,
+    default: {
+      origin: '*',
+      credentials: true,
+    },
+  },
+  mongodb: {
+    type: Object,
+    default: {
+      uri: 'mongodb://localhost:27017',
+      dbName: 'adamant-pool',
+    },
+  },
 };

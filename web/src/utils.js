@@ -1,4 +1,5 @@
 const ADM_DENOMINATION = 100000000;
+const NUMBER_WHOLE_DECIMAL_SEPARATOR = '.';
 
 function replaceWithDate(text, dateObject) {
   return text.replace(/{([a-zA-Z_]*)}/g, (_, digit) => dateObject[digit]);
@@ -83,4 +84,20 @@ export function sortBy(sortDirection, prop, array) {
     }
     return Number(aVal) - Number(bVal);
   });
+}
+
+/**
+ * Split whole and decimal parts of number
+ * @param {number|string} number
+ * @returns {{whole: string, decimal: string}}
+ */
+export function splitWholeDecimalNumberParts(number) {
+  if (number === null || number === undefined) {
+    return {whole: '', decimal:''};
+  }
+  const [whole, decimal] = number.toString().split(NUMBER_WHOLE_DECIMAL_SEPARATOR);
+  return {
+    whole,
+    decimal: decimal ? `${NUMBER_WHOLE_DECIMAL_SEPARATOR}${decimal}` : undefined,
+  }
 }

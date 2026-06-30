@@ -103,8 +103,22 @@ PR conventions:
 - `scripts/`: operational helpers such as process startup and migration from the older pool database
 - `config.default.jsonc`: public config reference and schema companion
 - `config.jsonc`, `config.json`, `config.test.jsonc`, logs, runtime DB files, and `.ai-ignored/`: local or generated files that must not be committed unless a task explicitly changes that policy
+- Current runtime baseline: Node.js 22.13.0 or newer, npm 10 or newer, MongoDB-backed pool storage, and Svelte/Vite dashboard tooling
+- LowDB helpers remain only for older data and migration tests unless a task explicitly revives LowDB runtime storage
 
 This repository is expected to be modernized. Do not describe current dependency versions, framework versions, or legacy implementation details as preferred future architecture unless the task explicitly asks for that decision.
+
+## Dependency Safety
+
+When dependency work is requested:
+
+- Follow `.ai-ignored/update-deps-securely.md` before running installs or lockfile refreshes
+- Use `ncu` to inspect direct dependency updates and re-run it after installation
+- Install with lifecycle scripts disabled by default, for example `npm install --ignore-scripts`
+- Do not enable lifecycle scripts globally
+- If a package needs a trusted native build or postinstall step, document the package and run the narrowest possible rebuild
+- Run `npm audit` in affected package roots and explain any remaining advisories
+- Keep dependency additions minimal, especially around networking, cryptography, config parsing, payout logic, and storage
 
 ## Security Rules
 
@@ -173,6 +187,15 @@ For setup or root workflow changes, also check the relevant root command, for ex
 
 ```sh
 npm run build:web
+```
+
+For dependency changes, also run affected audits:
+
+```sh
+npm audit
+npm --prefix server audit
+npm --prefix web audit
+npm --prefix scripts/migrate-lowdb-mongodb audit
 ```
 
 Always report exactly which commands were run, whether they passed, and what was intentionally not run.

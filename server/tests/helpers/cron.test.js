@@ -1,21 +1,28 @@
-import cron from '../../src/helpers/cron.js';
-import utils from '../../src/helpers/utils.js';
+import { jest } from '@jest/globals';
+
+jest.unstable_mockModule('../../src/modules/pay_out.js', () => ({
+  __esModule: true,
+  default: class Payer {
+    payOut() {}
+  },
+}));
+
+const cron = (await import('../../src/cron/payout.cron.js')).default;
 
 describe('Initializing a cron using the day of the week', () => {
-  afterEach(() => cron.payoutCronJob.stop());
+  afterEach(() => cron.cronJob.stop());
 
   const daysOfTheWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   test.each(daysOfTheWeek)('should call a cron job with correct pattern', (day) => {
-    const cronResponseCode = cron.initCron(day);
+    cron.init(day);
 
-    expect(cronResponseCode).not.toBe(-1);
-    expect(cron.payoutCronJob.cronTime.source).toBe(`0 0 * * ${day}`);
+    expect(cron.cronJob.cronTime.source).toBe(`0 0 * * ${day}`);
   });
 });
 
 describe('Initializing a cron using a pattern', () => {
-  afterEach(() => cron.payoutCronJob.stop());
+  afterEach(() => cron.cronJob.stop());
 
   const patternTable = [
     ['1h', '0 * * * *'],
@@ -27,16 +34,13 @@ describe('Initializing a cron using a pattern', () => {
   ];
 
   test.each(patternTable)('should init a cron with correct pattern based on the period', (period, pattern) => {
-    const cronResponseCode = cron.initCron(period);
+    cron.init(period);
 
-    expect(cronResponseCode).not.toBe(-1);
-    expect(cron.payoutCronJob.cronTime.source).toBe(pattern);
+    expect(cron.cronJob.cronTime.source).toBe(pattern);
   });
 });
 
 describe('Invalid period', () => {
-  beforeAll(() => cron.payoutCronJob = {});
-
   const invalidPeriods = [
     '32d',
     '2h',
@@ -45,10 +49,7 @@ describe('Invalid period', () => {
     null,
   ];
 
-  test.each(invalidPeriods)('should return -1', (period) => {
-    const cronResponseCode = cron.initCron(period);
-
-    expect(cronResponseCode).toBe(-1);
-    expect(utils.isPlainObject(cron.payoutCronJob)).toBeTruthy();
+  test.each(invalidPeriods)('should throw an error', (period) => {
+    expect(() => cron.init(period)).toThrow('Invalid cronTime');
   });
 });
