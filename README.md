@@ -170,5 +170,5 @@ Read [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup, validation comm
 - [ADAMANT apps](https://adamant.im/#adm-apps)
 - [ADAMANT explorer](https://explorer.adamant.im)
 - [ADAMANT Improvement Proposals](https://aips.adamant.im)
-- [Forging article](https://medium.com/adamant-im/earning-money-on-adm-forging-4c7b6eb15516)
-- [List of ADAMANT pools](https://medium.com/adamant-im/hodl-list-of-adamant-pools-join-in-and-get-rewards-491a98610f4b)
+- [Forging article](https://news.adamant.im/earning-money-on-adm-forging-4c7b6eb15516)
+- [List of ADAMANT pools](https://news.adamant.im/hodl-list-of-adamant-pools-join-in-and-get-rewards-491a98610f4b)
