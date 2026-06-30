@@ -11,7 +11,7 @@ import validateConfig from './validate.js';
 import { deriveIdentity, isEncrypted, parseHeader } from '../crypto/passphrase.js';
 import secret from '../../modules/secret.js';
 
-import { EXIT_CODE_ERROR, MIN_PAYOUT } from '../../defines.js';
+import { ADM_ADDRESS_REGEX, EXIT_CODE_ERROR, MIN_PAYOUT } from '../../defines.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -114,6 +114,27 @@ if (errorMessage) {
 
 if (config.minpayout < MIN_PAYOUT) {
   exit(`Pool's ${address} config is wrong. Parameter minpayout cannot be lower than ${MIN_PAYOUT} ADM. Cannot start Pool.`);
+}
+
+// Payout destinations are money-moving config. Validate their shape now so a typo
+// fails closed at startup instead of sending funds to a malformed address later.
+// An empty string is intentional ("keep this share on the pool wallet").
+for (const walletField of ['maintenancewallet', 'donatewallet']) {
+  const wallet = config[walletField];
+
+  if (wallet && !ADM_ADDRESS_REGEX.test(wallet)) {
+    exit(`Pool's ${address} config is wrong. Field _${walletField}_ must be a valid ADM address (U followed by digits). Cannot start Pool.`);
+  }
+}
+
+// Reward and donation percentages drive payout math; keep each within [0, 100]
+// so a negative or out-of-range value cannot distort the maintenance share.
+for (const percentField of ['reward_percentage', 'donate_percentage']) {
+  const percent = config[percentField];
+
+  if (percent < 0 || percent > 100) {
+    exit(`Pool's ${address} config is wrong. Field _${percentField}_ must be between 0 and 100. Cannot start Pool.`);
+  }
 }
 
 config.poolsShare = 100 - config.reward_percentage - config.donate_percentage;

@@ -122,6 +122,14 @@ class BlockParser {
   async parse(block) {
     const { id, height } = block;
 
+    // Untrusted node data: the block id is used directly in MongoDB filters, so a
+    // non-scalar id from a malformed or malicious response could become an operator
+    // query (NoSQL injection). Only a string or finite number is a safe block id.
+    if (typeof id !== 'string' && !Number.isFinite(id)) {
+      log.warn('Skipping a forged block with a missing or malformed id from the node response.');
+      return;
+    }
+
     let savedBlock;
     try {
       savedBlock = await mongo.blocksCollection.findOne({ id });

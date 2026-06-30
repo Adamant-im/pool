@@ -15,3 +15,7 @@ export const MIN_PAYOUT = 0.51; // check minpayout in config to be not less; tha
 export const EPOCH = Date.UTC(2017, 8, 2, 17, 0, 0, 0); // ADAMANT's epoch time
 export const FORMAT_PAYOUT ='yyyy-MM-dd';
 export const EXIT_CODE_ERROR = 1;
+// ADM account address: the letter `U` followed by the numeric account id. Used to
+// validate untrusted node responses and operator-configured payout wallets before
+// they reach database queries or transaction signing.
+export const ADM_ADDRESS_REGEX = /^U[0-9]{1,30}$/;

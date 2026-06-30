@@ -64,7 +64,11 @@ export default {
     type: Object,
     default: {
       origin: '*',
-      credentials: true,
+      // The API is public, read-only, and uses no cookies or auth, so credentialed
+      // CORS is unnecessary. A wildcard origin combined with credentials is also an
+      // invalid combination browsers refuse. Operators who need credentialed access
+      // must set a specific origin together with credentials: true.
+      credentials: false,
     },
   },
   mongodb: {

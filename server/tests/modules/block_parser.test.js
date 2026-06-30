@@ -73,6 +73,16 @@ describe('blockParser.parse', () => {
     expect(mockDistribute).toHaveBeenCalledTimes(1);
   });
 
+  it('should skip a block with a malformed id without touching the DB', async () => {
+    await blockParser.parse({ id: { $ne: null }, height: 1 });
+
+    const blocks = await mongoMock.blocksCollection.find({}).toArray();
+
+    expect(blocks).toHaveLength(0);
+    expect(RewardDistributor).toHaveBeenCalledTimes(0);
+    expect(mockDistribute).toHaveBeenCalledTimes(0);
+  });
+
   it('should save new block to DB and distribute', async () => {
     const savedBlockBeforeParsing = await mongoMock.blocksCollection.findOne({ id });
 
