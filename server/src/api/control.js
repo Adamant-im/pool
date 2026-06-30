@@ -30,7 +30,7 @@ function handleCommand(message) {
       try {
         const { address } = secret.unlock(password);
 
-        log.log(`Pool ${address} unlocked via control socket. Payouts and ADM notifications enabled.`);
+        log.info(`Pool ${address} unlocked via control socket. Payouts and ADM notifications enabled.`);
 
         return { ok: true, message: `Pool unlocked for ${address}.`, health: buildHealth() };
       } catch (error) {
