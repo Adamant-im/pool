@@ -1,4 +1,4 @@
-import { EPOCH, SAT } from '../defines.js';
+import { ADM_ADDRESS_REGEX, EPOCH, SAT } from '../defines.js';
 
 /**
  * Replaces `{token}` placeholders in a template with values from a date parts object.
@@ -21,6 +21,20 @@ export default {
     const _toString = Object.prototype.toString;
 
     return _toString.call(val) === '[object Object]';
+  },
+
+  /**
+   * Validates an ADM account address from untrusted input.
+   *
+   * The value must be a string shaped like an ADM address (`U` followed by
+   * digits). Rejecting non-strings is what keeps node-supplied values out of
+   * MongoDB query operators (e.g. `{ $ne: null }`) and away from transaction
+   * signing as a payout destination.
+   * @param {unknown} value Candidate ADM address, typically from a node response or config
+   * @return {boolean} True when the value is a syntactically valid ADM address
+   */
+  isAdmAddress(value) {
+    return typeof value === 'string' && ADM_ADDRESS_REGEX.test(value);
   },
 
   /**

@@ -103,6 +103,19 @@ class RewardDistributor {
     const { block, distributed, votesWeight } = this;
 
     try {
+      // Untrusted node data: a malformed or malicious response could carry a
+      // non-string address that would turn the per-voter MongoDB filters into
+      // operator queries (NoSQL injection) or become an invalid payout
+      // destination. Reject anything that is not a syntactically valid ADM
+      // address before it reaches a DB write or a future payout.
+      if (!utils.isAdmAddress(voter.address)) {
+        log.warn(
+            `Skipping reward distribution on block ${block.id} (height ${block.height}) ` +
+            'for a voter with a missing or malformed address from the node response.',
+        );
+        return;
+      }
+
       const { votesCount } = voter;
       const voterBalance = +voter.balance;
 

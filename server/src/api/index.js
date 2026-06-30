@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 
 import { buildHealth } from '../modules/health.js';
 import config from '../helpers/config/reader.js';
+import log from '../helpers/log.js';
 import mongo from '../repository/mongodb/index.js';
 import secret from '../modules/secret.js';
 import store from '../modules/store.js';
@@ -17,6 +18,9 @@ const publicDir = join(__dirname, '../../../web/dist/');
  * All routes are GET-only; no endpoint exposes secrets or accepts state changes.
  */
 const app = express();
+
+// Do not advertise the framework; it is needless information for an attacker.
+app.disable('x-powered-by');
 
 app.use(cors({
   origin: config.cors.origin,
@@ -71,5 +75,16 @@ app.get('/api/config', async (req, res) => res.send({
   payoutperiodPreviousRunTimestamp: store.periodInfo.previousRunTimestamp,
   payoutperiodNextRunTimestamp: store.periodInfo.nextRunTimestamp,
 }));
+
+// Final error handler. Express 5 forwards rejected async handlers here; log the
+// detail server-side and return a generic message so internal errors and stack
+// traces are never disclosed to clients. The 4-arg signature is what marks this
+// as Express error-handling middleware.
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  log.error(`Error serving ${req.method} ${req.originalUrl}: ${err.message}`);
+
+  res.status(500).send({ error: 'Internal server error.' });
+});
 
 export default app;

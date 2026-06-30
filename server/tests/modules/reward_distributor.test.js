@@ -87,6 +87,26 @@ describe('RewardDistributor.distribute', () => {
     });
   });
 
+  it('should skip a voter with a malformed address without writing to the DB', async () => {
+    const rewardDistributor = new RewardDistributor(mockBlock);
+
+    await mongoMock.blocksCollection.insertOne(mockBlock);
+
+    // A malicious/malformed node response could carry an object address that
+    // would otherwise become a MongoDB operator query.
+    await rewardDistributor.distributeForVoter({
+      address: { $ne: null },
+      votesCount: 10,
+      balance: '1000000',
+    });
+
+    const voters = await mongoMock.votersCollection.find({}).toArray();
+
+    expect(voters).toHaveLength(0);
+    expect(rewardDistributor.eligibleVotersCount).toBe(0);
+    expect(rewardDistributor.distributed.votersCount).toBe(0);
+  });
+
   it('should add rewards to stored pending values numerically', async () => {
     const rewardDistributor = new RewardDistributor(mockBlock);
 

@@ -99,10 +99,15 @@
   /** Port for pool's public Web panel **/
   "port": 36667,
 
-  /** Express server CORS configuration **/
+  /**
+    Express server CORS configuration.
+    The API is public and read-only, so `credentials` is false by default.
+    Only set `credentials` to true together with a specific (non-"*") `origin`;
+    a wildcard origin with credentials is an invalid combination browsers reject.
+  **/
   "cors": {
     "origin": "*",
-    "credentials": true
+    "credentials": false
   },
 
   /** MongoDB connection parameters **/

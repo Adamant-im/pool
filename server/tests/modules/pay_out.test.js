@@ -33,6 +33,9 @@ jest.unstable_mockModule('../../src/helpers/index.js', () => ({
   },
   log,
   notifier,
+  utils: {
+    isAdmAddress: (value) => typeof value === 'string' && /^U[0-9]{1,30}$/.test(value),
+  },
 }));
 
 jest.unstable_mockModule('../../src/modules/secret.js', () => ({
@@ -117,6 +120,19 @@ describe('Payer.payVoter', () => {
     expect(voter.pending).toBe(0);
     expect(voter.received).toBe(3.25);
     expect(transaction.payoutcount).toBe(1.25);
+  });
+
+  it('should not sign a payout for a record with a malformed address', async () => {
+    const payer = new Payer();
+    const result = await payer.payVoter({
+      address: { $ne: null },
+      pending: '1.25',
+      received: '2',
+    });
+
+    expect(result).toBeUndefined();
+    expect(sendTokens).not.toHaveBeenCalled();
+    expect(log.warn).toHaveBeenCalledWith(expect.stringContaining('malformed address'));
   });
 
   it('should keep pending rewards unchanged when the API rejects the payout', async () => {
