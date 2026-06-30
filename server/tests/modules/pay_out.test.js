@@ -33,6 +33,9 @@ jest.unstable_mockModule('../../src/helpers/index.js', () => ({
   },
   log,
   notifier,
+  utils: {
+    isAdmAddress: (value) => typeof value === 'string' && /^U[0-9]{6,}$/.test(value),
+  },
 }));
 
 jest.unstable_mockModule('../../src/modules/secret.js', () => ({
@@ -67,12 +70,12 @@ const { default: Payer, getVotersRewards } = await import('../../src/modules/pay
 describe('getVotersRewards', () => {
   it('should split voters and sum pending rewards numerically', () => {
     const result = getVotersRewards([
-      { address: 'U1', pending: '1.25' },
+      { address: 'U123456789', pending: '1.25' },
       { address: 'U2', pending: '0.25' },
       { address: 'U3', pending: 'invalid' },
     ]);
 
-    expect(result.votersToReward.map((voter) => voter.address)).toStrictEqual(['U1']);
+    expect(result.votersToReward.map((voter) => voter.address)).toStrictEqual(['U123456789']);
     expect(result.votersBelowMin.map((voter) => voter.address)).toStrictEqual(['U2', 'U3']);
     expect(result.pendingUserRewards).toBe(1.25);
     expect(result.belowMinRewards).toBe(0.25);
@@ -93,22 +96,22 @@ describe('Payer.payVoter', () => {
     });
 
     await mongoMock.votersCollection.insertOne({
-      address: 'U1',
+      address: 'U123456789',
       pending: '1.25',
       received: '2',
     });
 
     const payer = new Payer();
     const result = await payer.payVoter({
-      address: 'U1',
+      address: 'U123456789',
       pending: '1.25',
       received: '2',
     });
 
-    const voter = await mongoMock.votersCollection.findOne({ address: 'U1' });
+    const voter = await mongoMock.votersCollection.findOne({ address: 'U123456789' });
     const transaction = await mongoMock.transactionsCollection.findOne({ transactionId: 'tx-1' });
 
-    expect(sendTokens).toHaveBeenCalledWith('test passphrase', 'U1', 0.75);
+    expect(sendTokens).toHaveBeenCalledWith('test passphrase', 'U123456789', 0.75);
     expect(result).toStrictEqual({
       amount: 0.75,
       isUpdated: true,
@@ -119,6 +122,19 @@ describe('Payer.payVoter', () => {
     expect(transaction.payoutcount).toBe(1.25);
   });
 
+  it('should not sign a payout for a record with a malformed address', async () => {
+    const payer = new Payer();
+    const result = await payer.payVoter({
+      address: { $ne: null },
+      pending: '1.25',
+      received: '2',
+    });
+
+    expect(result).toBeUndefined();
+    expect(sendTokens).not.toHaveBeenCalled();
+    expect(log.warn).toHaveBeenCalledWith(expect.stringContaining('malformed address'));
+  });
+
   it('should keep pending rewards unchanged when the API rejects the payout', async () => {
     sendTokens.mockResolvedValue({
       success: false,
@@ -126,19 +142,19 @@ describe('Payer.payVoter', () => {
     });
 
     await mongoMock.votersCollection.insertOne({
-      address: 'U1',
+      address: 'U123456789',
       pending: 1.25,
       received: 2,
     });
 
     const payer = new Payer();
     const result = await payer.payVoter({
-      address: 'U1',
+      address: 'U123456789',
       pending: 1.25,
       received: 2,
     });
 
-    const voter = await mongoMock.votersCollection.findOne({ address: 'U1' });
+    const voter = await mongoMock.votersCollection.findOne({ address: 'U123456789' });
 
     expect(result).toBeUndefined();
     expect(voter.pending).toBe(1.25);

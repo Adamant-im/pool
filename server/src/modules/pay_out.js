@@ -7,7 +7,7 @@ import {
 import store, { normalizePendingReward } from './store.js';
 import secret from './secret.js';
 
-import { adamantApiClient, config, log, notifier } from '../helpers/index.js';
+import { adamantApiClient, config, log, notifier, utils } from '../helpers/index.js';
 import mongo from '../repository/mongodb/index.js';
 
 class Payer {
@@ -191,6 +191,15 @@ class Payer {
    */
   async payVoter(voter) {
     const { address } = voter;
+
+    // Defense in depth before signing: never send a payout to a stored record
+    // whose address is not a valid ADM address. Distribution rejects malformed
+    // node addresses before they are stored, so this guards legacy or manually
+    // edited records too.
+    if (!utils.isAdmAddress(address)) {
+      return log.warn('Skipping payout for a voter record with a missing or malformed address.');
+    }
+
     const pending = normalizePendingReward(voter);
     let received = Number(voter.received) || 0;
     const amount = pending - FEE;

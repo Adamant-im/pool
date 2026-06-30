@@ -7,6 +7,13 @@ import { pathToFileURL } from 'node:url';
 /**
  * Usage sample:
  *  MONGODB_URI=mongodb://localhost:27017 MONGODB_DB=adamant-pool LOWDB_STORAGE_PATH=../../server/db node index.js
+ *
+ * By default only the most recent blocks are migrated (the full block archive is
+ * not used by the running pool, which only scans blocks of the current payout
+ * period). Override with BLOCKS_MIGRATION_LIMIT:
+ *  BLOCKS_MIGRATION_LIMIT=500 node index.js   # keep the 500 most recent blocks
+ *  BLOCKS_MIGRATION_LIMIT=0   node index.js   # migrate the full block archive
+ * Voters and transactions are always migrated in full.
  */
 
 const collectionNames = ['blocks', 'voters', 'transactions'];
@@ -15,6 +22,10 @@ const uniqueKeysByCollection = {
   voters: 'address',
   transactions: 'transactionId'
 };
+
+// Default number of most recent blocks to migrate. The pool only reads blocks of
+// the current payout period, so older blocks add nothing once migrated.
+const DEFAULT_BLOCKS_LIMIT = 100;
 
 /**
  * Runs the LowDB to MongoDB migration using environment configuration.
@@ -47,8 +58,13 @@ async function main({ env = process.env, logger = console, MongoClientClass = Mo
 
     await ensureIndexes(database);
 
+    const blocksLimit = parseBlocksLimit(env);
+
     for (const collectionName of collectionNames) {
-      await migrateData(database, lowdbStoragePath, collectionName, { logger });
+      // Only the block archive is capped; voters and transactions migrate in full.
+      const limit = collectionName === 'blocks' ? blocksLimit : 0;
+
+      await migrateData(database, lowdbStoragePath, collectionName, { logger, limit });
     }
   } finally {
     await client.close();
@@ -75,6 +91,60 @@ function resolveDatabaseName(mongodbUri, configuredDatabaseName) {
   }
 
   throw new Error('MONGODB_DB is required when MONGODB_URI does not include a database name');
+}
+
+/**
+ * Resolves how many of the most recent blocks to migrate from the environment.
+ * Returns {@link DEFAULT_BLOCKS_LIMIT} when unset or invalid, and `0` (meaning
+ * "no limit, migrate the full archive") only when explicitly set to a
+ * non-negative integer such as `0`.
+ * @param {Record<string, string | undefined>} [env] Environment values to read
+ * @returns {number} Maximum number of blocks to migrate, where 0 means unlimited
+ */
+function parseBlocksLimit(env = process.env) {
+  const raw = env.BLOCKS_MIGRATION_LIMIT;
+
+  if (raw === undefined || raw === '') {
+    return DEFAULT_BLOCKS_LIMIT;
+  }
+
+  const value = Number(raw);
+
+  if (Number.isInteger(value) && value >= 0) {
+    return value;
+  }
+
+  return DEFAULT_BLOCKS_LIMIT;
+}
+
+/**
+ * Reads a block's height as a sortable number, treating a missing or non-numeric
+ * height as the oldest possible block so it is dropped first when capping.
+ * @param {object} block LowDB block document
+ * @returns {number} Numeric block height, or -Infinity when unavailable
+ */
+function blockHeight(block) {
+  const height = Number(block.height);
+
+  return Number.isFinite(height) ? height : -Infinity;
+}
+
+/**
+ * Selects the most recent documents up to a limit, ordered by block height.
+ * A falsy limit (e.g. `0`) or a limit that covers every document returns the
+ * input unchanged, so the full set is migrated.
+ * @param {object[]} documents LowDB documents read from a collection file
+ * @param {number} limit Maximum documents to keep, where 0 means unlimited
+ * @returns {object[]} The documents to migrate
+ */
+function selectRecentDocuments(documents, limit) {
+  if (!limit || documents.length <= limit) {
+    return documents;
+  }
+
+  return [...documents]
+    .sort((first, second) => blockHeight(second) - blockHeight(first))
+    .slice(0, limit);
 }
 
 /**
@@ -114,17 +184,33 @@ async function ensureIndexes(database) {
  * @param {string} collectionName Name of the LowDB and MongoDB collection
  * @param {object} [options] Runtime overrides for tests
  * @param {{log: Function}} [options.logger] Logger used for progress output
+ * @param {number} [options.limit] Maximum most-recent documents to migrate, where 0 means unlimited
  * @returns {Promise<void>}
  * @throws {Error} When a document misses the collection's unique key
  */
-async function migrateData(database, lowdbStoragePath, collectionName, { logger = console } = {}) {
+async function migrateData(
+  database,
+  lowdbStoragePath,
+  collectionName,
+  { logger = console, limit = 0 } = {}
+) {
   const db = new Low(new JSONFile(`${lowdbStoragePath}/${collectionName}.json`), {});
   await db.read();
 
   const collection = database.collection(collectionName);
+  const values = db.data?.values;
 
-  if (db.data?.values && db.data.values.length > 0) {
-    const operations = db.data.values.map((document) => {
+  if (values && values.length > 0) {
+    const documents = selectRecentDocuments(values, limit);
+
+    if (documents.length < values.length) {
+      logger.log(
+        `Keeping the ${documents.length} most recent of ${values.length} ${collectionName}; ` +
+          'older records are skipped'
+      );
+    }
+
+    const operations = documents.map((document) => {
       const filter = getUniqueFilter(collectionName, document);
 
       if (!filter) {
@@ -178,12 +264,15 @@ if (isCliEntrypoint()) {
 
 export {
   collectionNames,
+  DEFAULT_BLOCKS_LIMIT,
   ensureIndexes,
   getUniqueFilter,
   isCliEntrypoint,
   main,
   migrateData,
+  parseBlocksLimit,
   resolveDatabaseName,
   runCli,
+  selectRecentDocuments,
   uniqueKeysByCollection
 };
