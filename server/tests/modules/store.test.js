@@ -19,6 +19,7 @@ jest.unstable_mockModule('../../src/cron/payout.cron.js', () => ({
 const {
   formatDelegateName,
   normalizeDelegateRank,
+  normalizePendingReward,
 } = await import('../../src/modules/store.js');
 
 describe('store delegate helpers', () => {
@@ -34,5 +35,11 @@ describe('store delegate helpers', () => {
     expect(normalizeDelegateRank({ rank: '17' }, 0)).toBe(17);
     expect(normalizeDelegateRank({ rate: 'invalid', rank: '21' }, 0)).toBe(21);
     expect(normalizeDelegateRank({ rate: 'invalid', rank: null }, 35)).toBe(35);
+  });
+
+  it('should normalize stored pending rewards before summing accounting totals', () => {
+    expect(normalizePendingReward({ pending: '12.5' })).toBe(12.5);
+    expect(normalizePendingReward({ pending: 3 })).toBe(3);
+    expect(normalizePendingReward({ pending: 'invalid' })).toBe(0);
   });
 });

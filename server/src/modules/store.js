@@ -37,6 +37,17 @@ export function normalizeDelegateRank(delegate, fallbackRank = 0) {
   return 0;
 }
 
+/**
+ * Reads a voter's pending rewards as a finite ADM amount.
+ * @param {object} voter Voter database record that may contain numeric or string pending rewards
+ * @returns {number} Pending rewards in ADM, or 0 when the stored value is invalid
+ */
+export function normalizePendingReward(voter) {
+  const pending = Number(voter.pending);
+
+  return Number.isFinite(pending) ? pending : 0;
+}
+
 const store = {
   isDistributingRewards: false,
   periodInfo: {
@@ -161,7 +172,8 @@ const store = {
 
       const voters = await mongo.votersCollection.find({}).toArray();
 
-      this.delegate.pendingRewardsADM = voters.reduce((sum, voter) => sum + voter.pending, 0);
+      this.delegate.pendingRewardsADM = voters.reduce((sum, voter) => sum + normalizePendingReward(voter), 0);
+      log.debug(`Updated pending rewards total: ${this.delegate.pendingRewardsADM.toFixed(8)} ADM.`);
     } catch (error) {
       log.error(`Error while updating forging and period stats: ${error}`);
     }
@@ -188,6 +200,7 @@ const store = {
       }
 
       log.log(`Updated voters: ${this.delegate.voters.length} accounts`);
+      log.debug(`Updated vote counts for ${this.delegate.voters.length} voters.`);
     } else {
       log.warn(`Failed to get voters for ${config.address}. ${getVotersResponse.errorMessage}.`);
     }

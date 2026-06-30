@@ -11,13 +11,17 @@ const {
 /**
  * Logs a message and sends configured ADAMANT or Slack notifications.
  * @param {string} message Notification message
- * @param {'error'|'warn'|'info'|'log'} type Notification severity
+ * @param {'error'|'warn'|'info'|'log'|'debug'} type Notification severity
  * @param {boolean} [silentMode=false] Whether to skip external notification channels
  * @returns {void}
  */
 export default (message, type, silentMode = false) => {
   try {
     log[type](removeMarkdown(message));
+
+    if (type === 'debug') {
+      return;
+    }
 
     if (!silentMode) {
       if (!slack && !adamantNotify) {
@@ -29,6 +33,7 @@ export default (message, type, silentMode = false) => {
         warn: '#FFFF00',
         info: '#00FF00',
         log: '#FFFFFF',
+        debug: '#9CA3AF',
       };
 
       const color = colors[type];

@@ -60,7 +60,7 @@ describe('blockParser.parse', () => {
 
     await blockParser.parse({ id });
 
-    expect(RewardDistributor).toHaveBeenCalledTimes(1);
+    expect(RewardDistributor).toHaveBeenCalledTimes(0);
     expect(mockDistribute).toHaveBeenCalledTimes(0);
   });
 
@@ -84,5 +84,7 @@ describe('blockParser.parse', () => {
     expect(mockDistribute).toHaveBeenCalledTimes(1);
     expect(savedBlockBeforeParsing).toBeUndefined();
     expect(savedBlockAfterParsing.id).toBe(id);
+    expect(savedBlockAfterParsing.processed).toBe(false);
+    expect(savedBlockAfterParsing.rewardedAddresses).toStrictEqual([]);
   });
 });

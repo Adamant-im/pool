@@ -4,7 +4,7 @@ import {
   RETRY_PAYOUTS_TIMEOUT,
   SAT,
 } from '../defines.js';
-import store from './store.js';
+import store, { normalizePendingReward } from './store.js';
 
 import { adamantApiClient, config, log, notifier } from '../helpers/index.js';
 import mongo from '../repository/mongodb/index.js';
@@ -179,11 +179,14 @@ class Payer {
    * @returns {Promise<{amount: number, isUpdated?: boolean, isTransactionSaved?: boolean}|void>}
    */
   async payVoter(voter) {
-    let { pending, address, received } = voter;
-    const amount = voter.pending - FEE;
+    const { address } = voter;
+    const pending = normalizePendingReward(voter);
+    let received = Number(voter.received) || 0;
+    const amount = pending - FEE;
 
     const result = { amount };
 
+    log.debug(`Preparing payout for ${address}: pending ${pending.toFixed(8)} ADM, fee ${FEE.toFixed(8)} ADM.`);
     log.log(`Processing payment of ${amount.toFixed(8)} ADM reward to ${address}…`);
 
     const payment = await adamantApiClient.sendTokens(config.passPhrase, address, amount);
@@ -404,6 +407,11 @@ class Payer {
     this.votersBelowMin = votersBelowMin;
     this.pendingUserRewards = pendingUserRewards;
     this.belowMinRewards = belowMinRewards;
+
+    log.debug(
+        `Loaded payout candidates: ${votersToReward.length} payable voters, ` +
+        `${votersBelowMin.length} below-minimum voters.`,
+    );
   }
 
   /**
@@ -429,7 +437,7 @@ class Payer {
  * @param {object[]} voters Voter records loaded from storage
  * @returns {{votersToReward: object[], votersBelowMin: object[], pendingUserRewards: number, belowMinRewards: number}}
  */
-function getVotersRewards(voters) {
+export function getVotersRewards(voters) {
   const votersToReward = [];
   const votersBelowMin = [];
 
@@ -437,12 +445,14 @@ function getVotersRewards(voters) {
   let belowMinRewards = 0;
 
   voters.forEach((voter) => {
-    if (voter.pending >= config.minpayout) {
+    const pending = normalizePendingReward(voter);
+
+    if (pending >= config.minpayout) {
       votersToReward.push(voter);
-      pendingUserRewards += voter.pending;
+      pendingUserRewards += pending;
     } else {
       votersBelowMin.push(voter);
-      belowMinRewards += voter.pending;
+      belowMinRewards += pending;
     }
   });
 

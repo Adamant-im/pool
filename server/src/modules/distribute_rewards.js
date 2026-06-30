@@ -3,7 +3,7 @@ import {
   SAT,
 } from '../defines.js';
 
-import store from './store.js';
+import store, { normalizePendingReward } from './store.js';
 
 import { config, log, notifier, utils } from '../helpers/index.js';
 import mongo from '../repository/mongodb/index.js';
@@ -18,10 +18,11 @@ class RewardDistributor {
     this.blockTotalForged = +block.totalForged;
 
     this.distributed = {
-      rewardsADM: 0,
-      votersCount: 0,
-      percent: 0,
+      rewardsADM: Number(block.rewardsADM) || 0,
+      votersCount: Number(block.votersCount) || 0,
+      percent: Number(block.percent) || 0,
     };
+    this.rewardedAddresses = new Set(block.rewardedAddresses ?? []);
 
     this.voters = store.delegate.voters;
     this.votesWeight = store.delegate.votesWeight;
@@ -50,27 +51,29 @@ class RewardDistributor {
 
       await Promise.all(distributionPromises);
 
+      const isComplete = this.distributed.votersCount === this.eligibleVotersCount;
+      const isBlockUpdated = await this.updateBlockDistribution(isComplete);
+
+      this.isDistributionComplete = isComplete && isBlockUpdated;
+
       if (this.isDistributionComplete) {
-        const { distributed, eligibleVotersCount, blockTotalForged } = this;
+        const { distributed, eligibleVotersCount } = this;
         const { votersCount, rewardsADM, percent } = distributed;
 
-        if (distributed.votersCount === eligibleVotersCount) {
-          log.info(
-              `Block ${block.id} (height ${block.height}) rewards successfully updated — ` +
-              `${votersCount} of ${eligibleVotersCount} eligible voters, ` +
-              `distributedRewards: ${rewardsADM.toFixed(4)} ADM (${percent.toFixed(2)}%).`,
-          );
-        } else {
-          const blockTotalForgedInADM = utils.satsToADM(blockTotalForged * config.reward_percentage / 100, 4);
-
-          this.notifyRewardsOnBlock(
-              `distributed partially — ${votersCount} of ${eligibleVotersCount} eligible voters, ` +
-              `distributedRewards: ${rewardsADM.toFixed(4)} of ${blockTotalForgedInADM} ADM.`,
-              'warn',
-          );
-        }
+        log.info(
+            `Block ${block.id} (height ${block.height}) rewards successfully updated — ` +
+            `${votersCount} of ${eligibleVotersCount} eligible voters, ` +
+            `distributedRewards: ${rewardsADM.toFixed(4)} ADM (${percent.toFixed(2)}%).`,
+        );
       } else {
-        this.notifyRewardsOnBlock('could not be distributed. Check logs.', 'error');
+        const { distributed, eligibleVotersCount, blockTotalForged } = this;
+        const blockTotalForgedInADM = utils.satsToADM(blockTotalForged * config.reward_percentage / 100, 4);
+
+        this.notifyRewardsOnBlock(
+            `distributed partially — ${distributed.votersCount} of ${eligibleVotersCount} eligible voters, ` +
+            `distributedRewards: ${distributed.rewardsADM.toFixed(4)} of ${blockTotalForgedInADM} ADM. Check logs.`,
+            'warn',
+        );
       }
     }
   }
@@ -108,12 +111,20 @@ class RewardDistributor {
       if (isVoterEligible) {
         this.eligibleVotersCount += 1;
 
+        if (this.rewardedAddresses.has(voter.address)) {
+          log.debug(
+              `Skipping reward distribution for ${voter.address} on block ${block.id} ` +
+              `(height ${block.height}) because the voter is already recorded for this block.`,
+          );
+          return;
+        }
+
         const dbVoter = await this.findOrCreateVoter(voter);
 
         if (dbVoter) {
           const user = this.calcVoterReward(voterBalance, votesCount, votesWeight);
 
-          const pending = dbVoter.pending + user.reward;
+          const pending = normalizePendingReward(dbVoter) + user.reward;
 
           // Keep existing DB field names for compatibility with stored voter records.
           try {
@@ -143,29 +154,46 @@ class RewardDistributor {
           distributed.votersCount += 1;
           distributed.rewardsADM += user.reward;
           distributed.percent += user.percent;
-
-          // Mark block processed, if any voter gets reward
-          try {
-            await mongo.blocksCollection.updateOne(
-                { id: block.id },
-                {
-                  $set: {
-                    processed: true,
-                    ...distributed,
-                  },
-                });
-          } catch (error) {
-            log.error(`Error while distributing rewards for ${voter.address} on block ${block.id} (height ${block.height}): ${error}`);
-            return;
-          }
-
-          this.isDistributionComplete = true;
+          this.rewardedAddresses.add(voter.address);
         }
       }
     } catch (error) {
       log.error(
           `Error while distributing rewards for ${voter.address} on block ${block.id} (height ${block.height}): ${error}`,
       );
+    }
+  }
+
+  /**
+   * Stores block-level reward distribution progress.
+   * @param {boolean} processed Whether every eligible voter has been accounted for
+   * @returns {Promise<boolean>} Whether the block progress was saved
+   */
+  async updateBlockDistribution(processed) {
+    const { block, distributed, rewardedAddresses } = this;
+
+    try {
+      await mongo.blocksCollection.updateOne(
+          { id: block.id },
+          {
+            $set: {
+              processed,
+              ...distributed,
+              rewardedAddresses: [...rewardedAddresses],
+            },
+          },
+      );
+
+      log.debug(
+          `Saved reward distribution progress for block ${block.id} (height ${block.height}): ` +
+          `${distributed.votersCount} voters, processed=${processed}.`,
+      );
+
+      return true;
+    } catch (error) {
+      log.error(`Failed to save reward distribution progress for block ${block.id} (height ${block.height}): ${error}`);
+
+      return false;
     }
   }
 

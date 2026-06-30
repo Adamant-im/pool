@@ -50,6 +50,7 @@ export default {
   log_level: {
     type: String,
     default: 'log',
+    allowedValues: ['none', 'error', 'warn', 'info', 'log', 'debug'],
   },
   silent_mode: {
     type: Boolean,
