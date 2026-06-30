@@ -103,7 +103,7 @@ class BlockParser {
       try {
         await this.parse(block);
       } catch (error) {
-        const errorTemplate = `Error while processing ${block.id} (height ${block.height})`;
+        const errorTemplate = `Error while processing block ${block.id} (height ${block.height})`;
 
         log.error(`${errorTemplate}: ${error}`);
       }
@@ -126,7 +126,7 @@ class BlockParser {
     try {
       savedBlock = await mongo.blocksCollection.findOne({ id });
     } catch (error) {
-      log.error(`Failed to parse block ${id} with height ${height}: ${error}`);
+      log.error(`Failed to parse block ${id} at height ${height}: ${error}`);
       return;
     }
 
@@ -151,12 +151,12 @@ class BlockParser {
           rewardedAddresses: [],
         });
       } catch (error) {
-        log.error(`Failed to parse block ${id} with height ${height}: ${error}`);
+        log.error(`Failed to parse block ${id} at height ${height}: ${error}`);
         return;
       }
 
       log.info(
-          `Block successfully saved: ${id} (height ${height}). Distributing rewards…`,
+          `Forged block successfully stored: ${id} (height ${height}). Distributing rewards…`,
       );
 
       const rewardDistributor = new RewardDistributor({

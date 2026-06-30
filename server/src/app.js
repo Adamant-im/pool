@@ -17,7 +17,7 @@ try {
 }
 
 server.listen(config.port, () => (
-  log.log(`Pool ${config.address} successfully started the web server.`)
+  log.log(`Pool ${config.address} successfully started the web server on port ${config.port}.`)
 ));
 
 // Wait for first API health check

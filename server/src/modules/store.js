@@ -216,7 +216,7 @@ const store = {
         voter.votesCount = await this.updateVotes(voter.address);
       }
 
-      log.log(`Updated voters: ${this.delegate.voters.length} accounts`);
+      log.log(`Updated voter list: ${this.delegate.voters.length} accounts.`);
       log.debug(`Updated vote counts for ${this.delegate.voters.length} voters.`);
     } else {
       log.warn(`Failed to get voters for ${config.address}. ${getVotersResponse.errorMessage}.`);
@@ -240,7 +240,7 @@ const store = {
 
       this.delegate.balance = +this.delegate.balance;
 
-      log.log(`Updated balance: ${utils.satsToADM(this.delegate.balance)} ADM`);
+      log.log(`Updated delegate balance: ${utils.satsToADM(this.delegate.balance)} ADM.`);
     } else {
       log.warn(`Failed to get account data for ${config.address}. ${getAccountInfoResponse.errorMessage}.`);
     }
@@ -268,10 +268,10 @@ const store = {
       const votesWeightInADM = utils.satsToADM(this.delegate.votesWeight);
 
       log.log(
-          `Updated delegate ${formatDelegateName(this.delegate.username)}: ` +
+          `Updated delegate ${formatDelegateName(this.delegate.username)} details: ` +
           `rank ${this.delegate.rank}, ` +
           `productivity ${this.delegate.productivity}%, ` +
-          `votesWeight ${votesWeightInADM} ADM`,
+          `votesWeight ${votesWeightInADM} ADM.`,
       );
 
       return this.delegate;

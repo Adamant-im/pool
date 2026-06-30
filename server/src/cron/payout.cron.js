@@ -48,7 +48,7 @@ export default {
       log.info('Payout cron job has been started.');
     } catch (error) {
       log.error(
-          `Pool's ${config.address} config is wrong. Failed to validate payoutperiod: `+
+          `Pool's ${config.address} config is wrong. Failed to validate 'payoutperiod': `+
           `${payoutPeriod}${error ? ', ' + error : ''}. Cannot start Pool.`,
       );
 

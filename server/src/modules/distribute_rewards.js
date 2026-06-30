@@ -62,16 +62,16 @@ class RewardDistributor {
 
         log.info(
             `Block ${block.id} (height ${block.height}) rewards successfully updated — ` +
-            `${votersCount} of ${eligibleVotersCount} eligible voters, ` +
-            `distributedRewards: ${rewardsADM.toFixed(4)} ADM (${percent.toFixed(2)}%).`,
+            `${votersCount} of ${eligibleVotersCount} eligible voters. ` +
+            `Distributed rewards: ${rewardsADM.toFixed(4)} ADM (${percent.toFixed(2)}%).`,
         );
       } else {
         const { distributed, eligibleVotersCount, blockTotalForged } = this;
         const blockTotalForgedInADM = utils.satsToADM(blockTotalForged * config.reward_percentage / 100, 4);
 
         this.notifyRewardsOnBlock(
-            `distributed partially — ${distributed.votersCount} of ${eligibleVotersCount} eligible voters, ` +
-            `distributedRewards: ${distributed.rewardsADM.toFixed(4)} of ${blockTotalForgedInADM} ADM. Check logs.`,
+            `Block ${block.id} (height ${block.height}) rewards distributed partially — ${distributed.votersCount} of ${eligibleVotersCount} eligible voters. ` +
+            `Distributed rewards: ${distributed.rewardsADM.toFixed(4)} of ${blockTotalForgedInADM} ADM. Check log for details.`,
             'warn',
         );
       }

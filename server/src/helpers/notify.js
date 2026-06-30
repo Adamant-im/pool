@@ -17,7 +17,7 @@ const {
  */
 export default (message, type, silentMode = false) => {
   try {
-    log[type](removeMarkdown(message));
+    log[type](`/Logging notify message/ ${removeMarkdown(message)}`);
 
     if (type === 'debug') {
       return;
