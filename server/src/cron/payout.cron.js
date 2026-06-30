@@ -76,19 +76,29 @@ export default {
 
   /**
    * Processes a payout that was due while the pool was locked. No-op when no
-   * scheduled run was missed.
+   * scheduled run was missed or the pool is locked again. The deferred marker is
+   * cleared only after an attempt actually runs while unlocked, so an immediate
+   * re-lock or a payout error does not drop the missed run — a later unlock
+   * replays it.
    * @returns {Promise<void>}
    */
   async runDeferred() {
-    if (!this.deferredPayout) {
+    if (!this.deferredPayout || !secret.isUnlocked()) {
       return;
     }
 
-    this.deferredPayout = false;
-
     log.info('Processing reward payouts that were deferred while the pool was locked.');
 
-    await payer.payOut();
+    try {
+      await payer.payOut();
+
+      // payOut() owns its own retry scheduling for partial failures, so a
+      // completed attempt clears the deferred marker.
+      this.deferredPayout = false;
+    } catch (error) {
+      // Keep the marker set so the next unlock retries the missed payout.
+      log.error(`Deferred payout attempt failed, keeping it pending for the next unlock: ${error}`);
+    }
   },
 };
 

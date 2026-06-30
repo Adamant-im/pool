@@ -25,7 +25,14 @@ server.listen(config.port, () => (
 ));
 
 // Local control channel backing `adm-pool unlock`, `lock`, and `status`.
-const { socketPath } = startControlServer();
+let socketPath;
+
+try {
+  ({ socketPath } = startControlServer());
+} catch (error) {
+  log.error(`Cannot start the control socket securely: ${error.message} Cannot start Pool.`);
+  process.exit(EXIT_CODE_ERROR);
+}
 
 if (secret.status().mode === 'plain') {
   log.warn(
