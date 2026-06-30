@@ -15,16 +15,16 @@ async function checkBlocks() {
     if (getBlocksResponse.success) {
       const { blocks } = getBlocksResponse;
 
-      log.debug(`Fetched last ${blocks.length} blocks forged by delegate ${config.address}.`);
+      log.debug(`Fetched last ${blocks.length} blocks forged by delegate ${config.logName}.`);
 
       blocks.forEach((block) => blockParser.enqueue(block));
 
       await blockParser.run();
     } else {
-      log.warn(`Failed to get blocks forged by delegate ${config.address}. ${getBlocksResponse.errorMessage}.`);
+      log.warn(`Failed to get blocks forged by delegate ${config.logName}. ${getBlocksResponse.errorMessage}.`);
     }
   } catch (error) {
-    log.error(`Error while checking blocks forged by delegate ${config.address}: ${error}`);
+    log.error(`Error while checking blocks forged by delegate ${config.logName}: ${error}`);
   }
 }
 

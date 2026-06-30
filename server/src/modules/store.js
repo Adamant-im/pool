@@ -118,14 +118,14 @@ const store = {
         const totalADM = utils.satsToADM(forged);
 
         log.log(
-            `Updated forged info for delegate ${formatDelegateName(this.delegate.username)}: ` +
+            `Updated forged info for delegate ${config.logName}: ` +
             `total ${totalADM} ADM, ` +
             `block rewards ${rewardsInADM} ADM, ` +
             `fees ${feesInADM} ADM.`,
         );
       } else {
         log.warn(
-            `Failed to get forged info for delegate for ${config.address}. ` +
+            `Failed to get forged info for delegate ${config.address}. ` +
             `${delegateForgedInfoResponse.errorMessage}.`,
         );
       }
@@ -139,10 +139,13 @@ const store = {
         nextRunDateString: nextRunMoment.toISODate(),
       };
 
-      const transactions = await mongo.transactionsCollection.find({}).toArray();
-
-      // Assume previous run is the last saved transaction
-      const lastTransaction = transactions.sort((a, b) => b.timeStamp - a.timeStamp)[0];
+      // Assume the previous run is the most recent saved transaction.
+      // Backed by the { timeStamp: -1 } index, so this reads one document instead of the whole collection.
+      const [lastTransaction] = await mongo.transactionsCollection
+          .find({})
+          .sort({ timeStamp: -1 })
+          .limit(1)
+          .toArray();
 
       if (lastTransaction) {
         const previousRunTimestamp = lastTransaction.timeStamp;
@@ -216,7 +219,7 @@ const store = {
         voter.votesCount = await this.updateVotes(voter.address);
       }
 
-      log.log(`Updated voter list: ${this.delegate.voters.length} accounts.`);
+      log.log(`Updated voter list for delegate ${config.logName}: ${this.delegate.voters.length} accounts.`);
       log.debug(`Updated vote counts for ${this.delegate.voters.length} voters.`);
     } else {
       log.warn(`Failed to get voters for ${config.address}. ${getVotersResponse.errorMessage}.`);
@@ -240,7 +243,7 @@ const store = {
 
       this.delegate.balance = +this.delegate.balance;
 
-      log.log(`Updated delegate balance: ${utils.satsToADM(this.delegate.balance)} ADM.`);
+      log.log(`Updated balance for delegate ${config.logName}: ${utils.satsToADM(this.delegate.balance)} ADM.`);
     } else {
       log.warn(`Failed to get account data for ${config.address}. ${getAccountInfoResponse.errorMessage}.`);
     }
@@ -265,10 +268,15 @@ const store = {
       };
       this.delegate.votesWeight = +this.delegate.votesWeight;
 
+      // The account is confirmed to be a delegate here, so it is safe to identify
+      // it by name everywhere via config.logName (`'name' (address)`).
+      config.poolName = this.delegate.username;
+      config.logName = `${formatDelegateName(this.delegate.username)} (${config.address})`;
+
       const votesWeightInADM = utils.satsToADM(this.delegate.votesWeight);
 
       log.log(
-          `Updated delegate ${formatDelegateName(this.delegate.username)} details: ` +
+          `Updated delegate ${config.logName} details: ` +
           `rank ${this.delegate.rank}, ` +
           `productivity ${this.delegate.productivity}%, ` +
           `votesWeight ${votesWeightInADM} ADM.`,

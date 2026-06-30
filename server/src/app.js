@@ -4,9 +4,9 @@ import { EXIT_CODE_ERROR, UPDATE_BLOCKS_INTERVAL } from './defines.js';
 import { adamantApiClient, config, log, notifier } from './helpers/index.js';
 import payoutCron from './cron/payout.cron.js';
 
-import store, { formatDelegateName } from './modules/store.js';
 import blocksChecker from './modules/blocks_checker.js';
 import server from './api/index.js';
+import store from './modules/store.js';
 
 log.start();
 
@@ -35,16 +35,14 @@ adamantApiClient.onReady(async () => {
  * @returns {Promise<void>}
  */
 async function initDelegate() {
+  // updateDelegate() sets config.logName/poolName once the account is confirmed to be a delegate.
   const pool = await store.updateDelegate();
 
-  if (pool) {
-    config.poolName = pool.username;
-  } else {
+  if (!pool) {
     log.error(`Failed to get delegate for ${config.address}. Cannot start Pool.`);
     process.exit(EXIT_CODE_ERROR);
   }
 
-  config.logName = `${formatDelegateName(config.poolName)} (${config.address})`;
   config.infoString = `distributes _${config.reward_percentage}_% rewards to voters` +
     `${config.donate_percentage ? ' and donates ' + config.donate_percentage + '% to ADAMANT developer community' : ''} ` +
     `with payouts every _${config.payoutperiod}_. Minimum payout is _${config.minpayout}_ ADM.`;

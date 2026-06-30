@@ -84,6 +84,10 @@ const address = createAddressFromPublicKey(keysPair.publicKey);
 config.publicKey = keysPair.publicKey.toString('hex');
 config.address = address;
 
+// Until the delegate is fetched, identify the pool by address only — the account
+// may not be a delegate yet. store.updateDelegate() upgrades this to `'name' (address)`.
+config.logName = address;
+
 const errorMessage = validateConfig(config, configSchema);
 
 if (errorMessage) {
