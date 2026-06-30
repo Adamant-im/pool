@@ -1,6 +1,6 @@
 import * as process from 'node:process';
 
-import { EXIT_CODE_ERROR, UPDATE_BLOCKS_INTERVAL } from './defines.js';
+import { EXIT_CODE_ERROR, UNLOCK_PROMPT_DELAY, UPDATE_BLOCKS_INTERVAL } from './defines.js';
 import { adamantApiClient, config, log, notifier } from './helpers/index.js';
 import payoutCron from './cron/payout.cron.js';
 
@@ -88,6 +88,10 @@ async function maybeUnlockInteractively() {
 
     return;
   }
+
+  // Give the burst of startup logs a moment to flush so the prompt is the last
+  // line on screen instead of being buried in concurrent log output.
+  await new Promise((resolve) => setTimeout(resolve, UNLOCK_PROMPT_DELAY));
 
   log.warn('Pool passphrase is encrypted. Enter the operator password to unlock payouts, or press Enter to start LOCKED.');
 

@@ -6,6 +6,8 @@ export const RETRY_WHEN_UPDATING_VOTERS_TIMEOUT = 10 * 1000;
 export const RETRY_PAYOUTS_TIMEOUT = 10 * 60 * 1000;
 export const RETRY_PAYOUTS_COUNT = 3; // re-tries for payouts. Total tries RETRY_PAYOUTS_COUNT + 1;
 export const UPDATE_AFTER_PAYMENT_DELAY = 60 * 1000; // Wait 1 minute to update pool's balance and notify
+// Let the burst of startup logs flush before showing the interactive unlock prompt.
+export const UNLOCK_PROMPT_DELAY = 2000;
 export const SAT = 100000000; // 1 ADM = 100000000
 export const DEVIATION = 100000; // consider balance is zero when it is lower; then 0.001 ADM
 export const FEE = 0.5; // Transfer (Type 0) Tx fee;
