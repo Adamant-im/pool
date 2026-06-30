@@ -65,6 +65,7 @@
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
         <Cell
+          numeric
           columnId="pending"
           class={
             sort==='pending' && sortDirection==='descending' ?
@@ -74,23 +75,23 @@
           <Label>Pending</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
-        <Cell columnId="received">
+        <Cell numeric columnId="received">
           <Label>Received</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
-        <Cell columnId="balanceADM">
+        <Cell numeric columnId="balanceADM">
           <Label>Balance</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
-        <Cell columnId="votesCount">
+        <Cell numeric columnId="votesCount">
           <Label>Votes</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
-        <Cell columnId="weightADM">
+        <Cell numeric columnId="weightADM">
           <Label>Weight</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
-        <Cell style="text-align: right;" columnId="timeStamp">
+        <Cell numeric columnId="timeStamp">
           <Label>% of Total votes</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>

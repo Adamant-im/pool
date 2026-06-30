@@ -16,7 +16,11 @@ jest.unstable_mockModule('../../src/cron/payout.cron.js', () => ({
   },
 }));
 
-const { formatDelegateName, normalizeDelegateRank } = await import('../../src/modules/store.js');
+const {
+  formatDelegateName,
+  normalizeDelegateRank,
+  resolveDelegateRank,
+} = await import('../../src/modules/store.js');
 
 describe('store delegate helpers', () => {
   it('should wrap delegate names in single quotes', () => {
@@ -31,5 +35,47 @@ describe('store delegate helpers', () => {
     expect(normalizeDelegateRank({ rank: '17' }, 0)).toBe(17);
     expect(normalizeDelegateRank({ rate: 'invalid', rank: '21' }, 0)).toBe(21);
     expect(normalizeDelegateRank({ rate: 'invalid', rank: null }, 35)).toBe(35);
+  });
+
+  it('should resolve delegate rank from its position in the delegates list', async () => {
+    const apiClient = {
+      getDelegates: jest.fn()
+          .mockResolvedValueOnce({
+            success: true,
+            totalCount: 3,
+            delegates: [
+              { username: 'first-delegate', publicKey: 'first-public-key', rank: 1 },
+              { username: 'second-delegate', publicKey: 'second-public-key', rank: 2 },
+            ],
+          })
+          .mockResolvedValueOnce({
+            success: true,
+            totalCount: 3,
+            delegates: [
+              { username: 'anylongdelegatename', publicKey: 'target-public-key', rank: 1 },
+            ],
+          }),
+    };
+
+    await expect(
+        resolveDelegateRank(
+            { username: 'anylongdelegatename', publicKey: 'target-public-key', rank: 1 },
+            0,
+            apiClient,
+        ),
+    ).resolves.toBe(3);
+  });
+
+  it('should keep endpoint rank when the delegates list cannot be read', async () => {
+    const apiClient = {
+      getDelegates: jest.fn().mockResolvedValue({
+        success: false,
+        errorMessage: 'Node is unavailable',
+      }),
+    };
+
+    await expect(
+        resolveDelegateRank({ username: 'anylongdelegatename', rank: 44 }, 0, apiClient),
+    ).resolves.toBe(44);
   });
 });
