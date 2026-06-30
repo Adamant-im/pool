@@ -18,5 +18,9 @@ export default (config, schema) => {
     if (configProperty && field.type !== configProperty.__proto__.constructor) {
       return `Pool's ${config.address} config is wrong. Field type _${fieldName}_ is not valid, expected type is _${field.type.name}_. Cannot start Pool.`;
     }
+
+    if (field.allowedValues && !field.allowedValues.includes(config[fieldName])) {
+      return `Pool's ${config.address} config is wrong. Field _${fieldName}_ must be one of: ${field.allowedValues.join(', ')}. Cannot start Pool.`;
+    }
   }
 };

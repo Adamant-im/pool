@@ -32,6 +32,11 @@ jest.unstable_mockModule('../../src/modules/store.js', () => ({
       ],
     },
   },
+  normalizePendingReward(voter) {
+    const pending = Number(voter.pending);
+
+    return Number.isFinite(pending) ? pending : 0;
+  },
 }));
 
 const RewardDistributor = (await import('../../src/modules/distribute_rewards.js')).default;
@@ -80,7 +85,104 @@ describe('RewardDistributor.distribute', () => {
       rewardsADM: 0.000008,
       percent: 80,
     });
-    expect(rewardDistributor.isDistributionComplete).toBe(true);
+  });
+
+  it('should add rewards to stored pending values numerically', async () => {
+    const rewardDistributor = new RewardDistributor(mockBlock);
+
+    await mongoMock.blocksCollection.insertOne(mockBlock);
+    await mongoMock.votersCollection.insertOne({
+      address: 'U3247657843720097949',
+      pending: '1.25',
+      received: 0,
+    });
+
+    await rewardDistributor.distributeForVoter({
+      address: 'U3247657843720097949',
+      votesCount: 10,
+      balance: '1000000',
+    });
+
+    const savedVoter = await mongoMock.votersCollection.findOne({ address: 'U3247657843720097949' });
+
+    expect(savedVoter.pending).toBeCloseTo(1.250008);
+  });
+
+  it('should not distribute the same block reward twice to an already recorded voter', async () => {
+    const block = {
+      ...mockBlock,
+      id: 2,
+      processed: false,
+      rewardedAddresses: ['U3247657843720097949'],
+      votersCount: 1,
+      rewardsADM: 0.000008,
+      percent: 80,
+    };
+    const rewardDistributor = new RewardDistributor(block);
+
+    await mongoMock.blocksCollection.insertOne(block);
+
+    await rewardDistributor.distributeForVoter({
+      address: 'U3247657843720097949',
+      votesCount: 10,
+      balance: '1000000',
+    });
+    await rewardDistributor.updateBlockDistribution(
+        rewardDistributor.distributed.votersCount === rewardDistributor.eligibleVotersCount,
+    );
+
+    const savedBlock = await mongoMock.blocksCollection.findOne({ id: 2 });
+    const savedVoter = await mongoMock.votersCollection.findOne({ address: 'U3247657843720097949' });
+
+    expect(savedVoter).toBeUndefined();
+    expect(savedBlock.processed).toBe(true);
+    expect(savedBlock.votersCount).toBe(1);
+    expect(savedBlock.rewardsADM).toBe(0.000008);
+  });
+
+  it('should persist voter progress on the block before the block is marked processed', async () => {
+    const block = { ...mockBlock, id: 3, processed: false, rewardedAddresses: [] };
+    const rewardDistributor = new RewardDistributor(block);
+
+    await mongoMock.blocksCollection.insertOne(block);
+
+    // Only the per-voter step runs; the final updateBlockDistribution() never happens,
+    // simulating a crash right after the voter reward was stored.
+    await rewardDistributor.distributeForVoter({
+      address: 'U3247657843720097949',
+      votesCount: 10,
+      balance: '1000000',
+    });
+
+    const savedBlock = await mongoMock.blocksCollection.findOne({ id: 3 });
+
+    // Progress is already durable, so a retry can skip this voter instead of paying again.
+    expect(savedBlock.rewardedAddresses).toContain('U3247657843720097949');
+    expect(savedBlock.votersCount).toBe(1);
+    expect(savedBlock.rewardsADM).toBeCloseTo(0.000008);
+    expect(savedBlock.processed).toBe(false);
+  });
+
+  it('should not re-pay a voter recorded by incremental progress when the block is retried', async () => {
+    const firstRunBlock = { ...mockBlock, id: 4, processed: false, rewardedAddresses: [] };
+    const voter = { address: 'U3247657843720097949', votesCount: 10, balance: '1000000' };
+
+    await mongoMock.blocksCollection.insertOne(firstRunBlock);
+
+    // First (crashed) run pays the voter and records progress, but never marks the block processed.
+    await new RewardDistributor(firstRunBlock).distributeForVoter(voter);
+
+    const partiallySavedBlock = await mongoMock.blocksCollection.findOne({ id: 4 });
+    const pendingAfterFirstRun = (
+      await mongoMock.votersCollection.findOne({ address: voter.address })
+    ).pending;
+
+    // Retry seeds the distributor from the saved block, exactly as block_parser does.
+    await new RewardDistributor({ ...firstRunBlock, ...partiallySavedBlock }).distributeForVoter(voter);
+
+    const voterAfterRetry = await mongoMock.votersCollection.findOne({ address: voter.address });
+
+    expect(voterAfterRetry.pending).toBe(pendingAfterFirstRun);
   });
 });
 

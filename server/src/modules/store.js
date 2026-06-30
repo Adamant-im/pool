@@ -37,6 +37,17 @@ export function normalizeDelegateRank(delegate, fallbackRank = 0) {
   return 0;
 }
 
+/**
+ * Reads a voter's pending rewards as a finite ADM amount.
+ * @param {object} voter Voter database record that may contain numeric or string pending rewards
+ * @returns {number} Pending rewards in ADM, or 0 when the stored value is invalid
+ */
+export function normalizePendingReward(voter) {
+  const pending = Number(voter.pending);
+
+  return Number.isFinite(pending) ? pending : 0;
+}
+
 const store = {
   isDistributingRewards: false,
   periodInfo: {
@@ -65,6 +76,10 @@ const store = {
     pendingRewardsADM: 0,
   },
 
+  /**
+   * Refreshes delegate, voters, balance, and period stats in parallel.
+   * @returns {Promise<unknown[]>} Resolves once every update settles
+   */
   updateAll() {
     const updates = [
       this.updateDelegate(),
@@ -76,6 +91,10 @@ const store = {
     return Promise.all(updates);
   },
 
+  /**
+   * Updates forged totals, payout period boundaries, and the aggregate pending rewards shown on the dashboard.
+   * @returns {Promise<void>}
+   */
   async updateStats() {
     try {
       const delegateForgedInfoResponse = await adamantApiClient.getDelegateStats(config.publicKey);
@@ -99,14 +118,14 @@ const store = {
         const totalADM = utils.satsToADM(forged);
 
         log.log(
-            `Updated forged info for delegate ${formatDelegateName(this.delegate.username)}: ` +
+            `Updated forged info for delegate ${config.logName}: ` +
             `total ${totalADM} ADM, ` +
             `block rewards ${rewardsInADM} ADM, ` +
             `fees ${feesInADM} ADM.`,
         );
       } else {
         log.warn(
-            `Failed to get forged info for delegate for ${config.address}. ` +
+            `Failed to get forged info for delegate ${config.address}. ` +
             `${delegateForgedInfoResponse.errorMessage}.`,
         );
       }
@@ -120,10 +139,13 @@ const store = {
         nextRunDateString: nextRunMoment.toISODate(),
       };
 
-      const transactions = await mongo.transactionsCollection.find({}).toArray();
-
-      // Assume previous run is the last saved transaction
-      const lastTransaction = transactions.sort((a, b) => b.timeStamp - a.timeStamp)[0];
+      // Assume the previous run is the most recent saved transaction.
+      // Backed by the { timeStamp: -1 } index, so this reads one document instead of the whole collection.
+      const [lastTransaction] = await mongo.transactionsCollection
+          .find({})
+          .sort({ timeStamp: -1 })
+          .limit(1)
+          .toArray();
 
       if (lastTransaction) {
         const previousRunTimestamp = lastTransaction.timeStamp;
@@ -161,12 +183,18 @@ const store = {
 
       const voters = await mongo.votersCollection.find({}).toArray();
 
-      this.delegate.pendingRewardsADM = voters.reduce((sum, voter) => sum + voter.pending, 0);
+      this.delegate.pendingRewardsADM = voters.reduce((sum, voter) => sum + normalizePendingReward(voter), 0);
+      log.debug(`Updated pending rewards total: ${this.delegate.pendingRewardsADM.toFixed(8)} ADM.`);
     } catch (error) {
       log.error(`Error while updating forging and period stats: ${error}`);
     }
   },
 
+  /**
+   * Reads how many delegates a given account currently votes for.
+   * @param {string} address ADAMANT address of the voter
+   * @returns {Promise<number|undefined>} Number of delegates voted for, or undefined when the lookup fails
+   */
   async updateVotes(address) {
     const getVoteDataResponse = await adamantApiClient.getVoteData(address);
 
@@ -177,6 +205,10 @@ const store = {
     }
   },
 
+  /**
+   * Refreshes the delegate's voter list and each voter's vote count.
+   * @returns {Promise<void>}
+   */
   async updateVoters() {
     const getVotersResponse = await adamantApiClient.getVoters(config.publicKey);
 
@@ -187,12 +219,17 @@ const store = {
         voter.votesCount = await this.updateVotes(voter.address);
       }
 
-      log.log(`Updated voters: ${this.delegate.voters.length} accounts`);
+      log.log(`Updated voter list for delegate ${config.logName}: ${this.delegate.voters.length} accounts.`);
+      log.debug(`Updated vote counts for ${this.delegate.voters.length} voters.`);
     } else {
       log.warn(`Failed to get voters for ${config.address}. ${getVotersResponse.errorMessage}.`);
     }
   },
 
+  /**
+   * Refreshes the delegate account data and current balance in sats.
+   * @returns {Promise<void>}
+   */
   async updateBalance() {
     const getAccountInfoResponse = await adamantApiClient.getAccountInfo({
       publicKey: config.publicKey,
@@ -206,12 +243,16 @@ const store = {
 
       this.delegate.balance = +this.delegate.balance;
 
-      log.log(`Updated balance: ${utils.satsToADM(this.delegate.balance)} ADM`);
+      log.log(`Updated balance for delegate ${config.logName}: ${utils.satsToADM(this.delegate.balance)} ADM.`);
     } else {
       log.warn(`Failed to get account data for ${config.address}. ${getAccountInfoResponse.errorMessage}.`);
     }
   },
 
+  /**
+   * Refreshes delegate rank, productivity, and total vote weight.
+   * @returns {Promise<object|undefined>} Updated delegate state, or undefined when the lookup fails
+   */
   async updateDelegate() {
     const getDelegateResponse = await adamantApiClient.getDelegate({
       publicKey: config.publicKey,
@@ -227,13 +268,18 @@ const store = {
       };
       this.delegate.votesWeight = +this.delegate.votesWeight;
 
+      // The account is confirmed to be a delegate here, so it is safe to identify
+      // it by name everywhere via config.logName (`'name' (address)`).
+      config.poolName = this.delegate.username;
+      config.logName = `${formatDelegateName(this.delegate.username)} (${config.address})`;
+
       const votesWeightInADM = utils.satsToADM(this.delegate.votesWeight);
 
       log.log(
-          `Updated delegate ${formatDelegateName(this.delegate.username)}: ` +
+          `Updated delegate ${config.logName} details: ` +
           `rank ${this.delegate.rank}, ` +
           `productivity ${this.delegate.productivity}%, ` +
-          `votesWeight ${votesWeightInADM} ADM`,
+          `votesWeight ${votesWeightInADM} ADM.`,
       );
 
       return this.delegate;

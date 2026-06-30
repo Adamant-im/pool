@@ -64,7 +64,7 @@
 
   /**
     The software will use verbosity according to log_level.
-    Supported levels: none < error < warn < info < log.
+    Supported levels: none < error < warn < info < log < debug.
   **/
   "log_level": "log",
 

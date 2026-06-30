@@ -10,6 +10,10 @@ import store from '../modules/store.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const publicDir = join(__dirname, '../../../web/dist/');
 
+/**
+ * Read-only Express app that serves the web dashboard and the public pool JSON API.
+ * All routes are GET-only; no endpoint exposes secrets or accepts state changes.
+ */
 const app = express();
 
 app.use(cors({
@@ -27,20 +31,24 @@ app.use('/', express.static(publicDir));
 
 app.get('/', (req, res) => res.sendFile(join(publicDir, 'index.html')));
 
+// Returns all recorded payout transactions.
 app.get('/api/transactions', async (req, res) => {
   const transactions = await mongo.transactionsCollection.find({}).toArray();
 
   return res.send(transactions);
 });
 
+// Returns all voters with their accumulated and pending rewards.
 app.get('/api/voters', async (req, res) => {
   const voters = await mongo.votersCollection.find({}).toArray();
 
   return res.send(voters);
 });
 
+// Returns the in-memory delegate/period state snapshot.
 app.get('/api/delegate', async (req, res) => res.send(store));
 
+// Returns the public pool configuration and current period summary.
 app.get('/api/config', async (req, res) => res.send({
   version: config.version,
   reward_percentage: config.reward_percentage,
