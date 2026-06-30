@@ -21,7 +21,7 @@
   /** Percentage of rewards to distribute to voters **/
   "reward_percentage": 80,
 
-  /** Percentage of rewards to donate to the ADAMANT Foundation **/
+  /** Percentage of rewards to donate to the ADAMANT developer community **/
   "donate_percentage": 0,
 
   /**

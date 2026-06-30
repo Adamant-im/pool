@@ -74,7 +74,7 @@
         </a>
       </b>
       distributes {system?.reward_percentage}% rewards to
-      voters {system?.donate_percentage ? `and donates ${system?.donate_percentage}% to ADAMANT Foundation` : '' } with
+      voters {system?.donate_percentage ? `and donates ${system?.donate_percentage}% to ADAMANT developer community` : '' } with
       payouts every {system?.payoutperiod}. Minimum payout is {system?.minpayout} ADM.
     </p>
 

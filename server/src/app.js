@@ -46,7 +46,7 @@ async function initDelegate() {
 
   config.logName = `${formatDelegateName(config.poolName)} (${config.address})`;
   config.infoString = `distributes _${config.reward_percentage}_% rewards to voters` +
-    `${config.donate_percentage ? ' and donates ' + config.donate_percentage + '% to ADAMANT Foundation' : ''} ` +
+    `${config.donate_percentage ? ' and donates ' + config.donate_percentage + '% to ADAMANT developer community' : ''} ` +
     `with payouts every _${config.payoutperiod}_. Minimum payout is _${config.minpayout}_ ADM.`;
 
   notifier(
