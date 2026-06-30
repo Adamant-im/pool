@@ -4,8 +4,6 @@ import { adamantApiClient, config, log, utils } from '../helpers/index.js';
 import mongo from '../repository/mongodb/index.js';
 import payoutCron from '../cron/payout.cron.js';
 
-const DELEGATE_PAGE_LIMIT = 100;
-
 /**
  * Formats a delegate name consistently for logs and notifications.
  * @param {string} delegateName Delegate username returned by the node API
@@ -37,63 +35,6 @@ export function normalizeDelegateRank(delegate, fallbackRank = 0) {
   }
 
   return 0;
-}
-
-/**
- * Checks whether two delegate records describe the same delegate.
- * @param {object} candidate Delegate record from a list response
- * @param {object} target Delegate record returned for the configured pool
- * @returns {boolean} Whether both records match by stable delegate identity fields
- */
-function isSameDelegate(candidate, target) {
-  return Boolean(
-      (candidate.publicKey && target.publicKey && candidate.publicKey === target.publicKey) ||
-      (candidate.address && target.address && candidate.address === target.address) ||
-      (candidate.username && target.username && candidate.username === target.username),
-  );
-}
-
-/**
- * Resolves delegate rank from its position in the delegates list.
- * @param {object} delegate Delegate data returned by the single delegate endpoint
- * @param {number} fallbackRank Rank to use when the delegates list cannot be read
- * @param {object} apiClient ADAMANT API client used to read delegates
- * @returns {Promise<number>} Delegate position in the full delegates list
- */
-export async function resolveDelegateRank(delegate, fallbackRank = 0, apiClient = adamantApiClient) {
-  const fallback = normalizeDelegateRank(delegate, fallbackRank);
-  let offset = 0;
-  let totalCount;
-
-  do {
-    const delegatesResponse = await apiClient.getDelegates({
-      limit: DELEGATE_PAGE_LIMIT,
-      offset,
-    });
-
-    if (!delegatesResponse.success || !Array.isArray(delegatesResponse.delegates)) {
-      return fallback;
-    }
-
-    const delegateIndex = delegatesResponse.delegates.findIndex((candidate) => (
-      isSameDelegate(candidate, delegate)
-    ));
-
-    if (delegateIndex !== -1) {
-      return offset + delegateIndex + 1;
-    }
-
-    const delegatesCount = delegatesResponse.delegates.length;
-
-    if (delegatesCount === 0) {
-      return fallback;
-    }
-
-    totalCount = Number(delegatesResponse.totalCount);
-    offset += delegatesCount;
-  } while (!Number.isFinite(totalCount) || offset < totalCount);
-
-  return fallback;
 }
 
 const store = {
@@ -282,7 +223,7 @@ const store = {
       this.delegate = {
         ...this.delegate,
         ...apiDelegate,
-        rank: await resolveDelegateRank(apiDelegate, this.delegate.rank),
+        rank: normalizeDelegateRank(apiDelegate, this.delegate.rank),
       };
       this.delegate.votesWeight = +this.delegate.votesWeight;
 
