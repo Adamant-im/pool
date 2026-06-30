@@ -45,7 +45,7 @@ export default (message, type, silentMode = false) => {
       if (slack && slack.length > 34) {
         axios.post(slack, params)
             .catch((error) => {
-              log.log(`Request to Slack with message ${message} failed. ${error}.`);
+              log.warn(`Failed to send notification message '${message}' to Slack. ${error}.`);
             });
       }
 

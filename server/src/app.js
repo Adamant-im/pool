@@ -50,7 +50,7 @@ async function initDelegate() {
     `with payouts every _${config.payoutperiod}_. Minimum payout is _${config.minpayout}_ ADM.`;
 
   notifier(
-      `Pool ${config.logName} started on v${config.version} software and listens on port ${config.port}. It ${config.infoString}`,
+      `Pool ${config.logName} started on v${config.version} software and web UI running on port ${config.port}. It ${config.infoString}`,
       'info',
   );
 
