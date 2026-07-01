@@ -72,7 +72,7 @@
   function formatWeightPercent(weightPercent) {
     if (weightPercent == null) return null;
 
-    return weightPercent > 0 && weightPercent < 0.01 ? '> 0.01%' : `${weightPercent.toFixed(2)}%`;
+    return weightPercent > 0 && weightPercent < 0.01 ? '< 0.01%' : `${weightPercent.toFixed(2)}%`;
   }
 </script>
 
