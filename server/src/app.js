@@ -92,7 +92,7 @@ async function maybeUnlockInteractively() {
 
   if (!process.stdin.isTTY) {
     notifyPoolLockedAtStartup();
-  
+
     log.warn(
         `Pool ${config.address} started LOCKED — the passphrase is encrypted and no terminal is attached. ` +
         `Payouts and ADM notifications are paused. Run \`adm-pool unlock\` (control socket: ${socketPath}).`,
