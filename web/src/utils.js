@@ -75,14 +75,22 @@ export function parseADM(adm) {
  */
 export function sortBy(sortDirection, prop, array) {
   return array.sort((a, b) => {
-    const [aVal, bVal] = [a[prop], b[prop]][
-      sortDirection === 'ascending' ? 'slice' : 'reverse'
-    ]();
+    const direction = sortDirection === 'ascending' ? 1 : -1;
+    const aVal = a[prop];
+    const bVal = b[prop];
 
-    if (typeof aVal === 'string' && typeof bVal === 'string') {
-      return aVal.localeCompare(bVal);
+    const areStrings = typeof aVal === 'string' && typeof bVal === 'string';
+    const aMissing = aVal === undefined || aVal === null || (!areStrings && Number.isNaN(Number(aVal)));
+    const bMissing = bVal === undefined || bVal === null || (!areStrings && Number.isNaN(Number(bVal)));
+
+    if (aMissing && bMissing) return 0;
+    if (aMissing) return 1;
+    if (bMissing) return -1;
+
+    if (areStrings) {
+      return aVal.localeCompare(bVal) * direction;
     }
-    return Number(aVal) - Number(bVal);
+    return (Number(aVal) - Number(bVal)) * direction;
   });
 }
 

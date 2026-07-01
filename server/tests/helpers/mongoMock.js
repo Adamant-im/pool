@@ -67,10 +67,22 @@ function createCollection() {
       return { acknowledged: true, insertedId: document.id ?? document.address };
     },
 
-    async updateOne(query, update) {
-      const document = await this.findOne(query);
+    async updateOne(query, update, options = {}) {
+      let document = await this.findOne(query);
 
       if (!document) {
+        if (options.upsert) {
+          document = {
+            ...query,
+            ...(update.$setOnInsert ?? {}),
+            ...(update.$set ?? {}),
+          };
+
+          this.data.push(document);
+
+          return { acknowledged: true, matchedCount: 0, modifiedCount: 0, upsertedCount: 1 };
+        }
+
         return { acknowledged: true, matchedCount: 0, modifiedCount: 0 };
       }
 

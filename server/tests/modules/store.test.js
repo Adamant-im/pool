@@ -17,6 +17,7 @@ jest.unstable_mockModule('../../src/cron/payout.cron.js', () => ({
 }));
 
 const {
+  buildVoterPublicFields,
   formatDelegateName,
   normalizeDelegateRank,
   normalizePendingReward,
@@ -41,5 +42,18 @@ describe('store delegate helpers', () => {
     expect(normalizePendingReward({ pending: '12.5' })).toBe(12.5);
     expect(normalizePendingReward({ pending: 3 })).toBe(3);
     expect(normalizePendingReward({ pending: 'invalid' })).toBe(0);
+  });
+
+  it('should build public voter metadata from the current voter response', () => {
+    expect(buildVoterPublicFields({
+      username: 'test_delegate',
+      votesCount: '2',
+      balance: '500000000',
+    })).toEqual({
+      username: 'test_delegate',
+      votesCount: 2,
+      balanceADM: 5,
+      weightADM: 2.5,
+    });
   });
 });

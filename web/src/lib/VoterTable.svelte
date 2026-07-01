@@ -7,6 +7,8 @@
 
   import {formatNumber, splitWholeDecimalNumberParts, sortBy} from '../utils.js';
 
+  const ADM_DENOMINATION = 100000000;
+
   let {rows = [], votesWeight, activeAddresses = new Set(), delegate, names = new Map()} = $props();
 
   let activeOnly = $state(false);
@@ -23,11 +25,23 @@
       || '';
   }
 
+  function currentWeightADM(voter) {
+    const balance = Number(voter.balance);
+    const votesCount = Number(voter.votesCount);
+
+    if (Number.isFinite(balance) && votesCount > 0) {
+      return balance / votesCount / ADM_DENOMINATION;
+    }
+
+    return voter.weightADM ?? null;
+  }
+
   // Precompute each voter's share of the total vote weight so the column is sortable.
   const withPercent = $derived(rows.map((voter) => ({
     ...voter,
-    weightPercent: activeAddresses.has(voter.address) && votesWeight && voter.weightADM
-      ? voter.weightADM / votesWeight * 10000000000
+    weightADM: activeAddresses.has(voter.address) ? currentWeightADM(voter) : null,
+    weightPercent: activeAddresses.has(voter.address) && votesWeight && currentWeightADM(voter)
+      ? currentWeightADM(voter) / votesWeight * 10000000000
       : null,
   })));
 
@@ -67,15 +81,30 @@
     font-weight: bold;
   }
 
-  .delegate-name {
+  .address-name {
     display: block;
     margin-top: .125rem;
   }
 
+  .table-heading {
+    display: flex;
+    align-items: flex-end;
+    gap: .5rem;
+    width: 100%;
+  }
+
+  .table-title {
+    display: flex;
+    align-items: baseline;
+    gap: .5rem;
+  }
+
   .table-controls {
+    flex: 1 1 auto;
     margin-left: auto;
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: .5rem;
   }
 
@@ -113,14 +142,32 @@
     cursor: pointer;
     accent-color: var(--mdc-theme-primary);
   }
+
+  @media (max-width: 42rem) {
+    .table-heading {
+      flex-wrap: wrap;
+    }
+
+    .table-controls {
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    .filter-input {
+      flex: 1 1 12rem;
+      min-width: 0;
+    }
+  }
 </style>
 
 <div class="max-w-280 w-full mt-6">
-  <div class="text-xl flex gap-2 items-end mb-4">
-    Voters
-    <span class="text-secondary text-sm font-medium">
-      {voters.length}
-    </span>
+  <div class="table-heading text-xl mb-4">
+    <div class="table-title">
+      Voters
+      <span class="text-secondary text-sm font-medium">
+        {voters.length}
+      </span>
+    </div>
     <div class="table-controls">
       <input
         class="filter-input"
@@ -193,23 +240,24 @@
         <Row>
           <Cell>{ index + 1 + currentPage * perPage }</Cell>
           <Cell>
+            {@const name = voterName(voter)}
             {#if delegate && voter.address === delegate.address}
               <a
-                      href={`https://explorer.adamant.im/delegate/${voter.address}`}
+                      href={`https://explorer.adamant.im/address/${voter.address}`}
                       target="_blank"
                       rel="noreferrer"
-                      title="Delegate details"
+                      title="Address details"
               >
                 { voter.address }
               </a>
               <a
-                      class="delegate-name"
+                      class="address-name"
                       href={`https://explorer.adamant.im/delegate/${voter.address}`}
                       target="_blank"
                       rel="noreferrer"
                       title="Delegate details"
               >
-                {delegate.username} <sub>{delegate.rank}</sub>
+                {name}
               </a>
             {:else}
               <a
@@ -220,6 +268,17 @@
               >
                 { voter.address }
               </a>
+              {#if name}
+                <a
+                        class="address-name"
+                        href={`https://explorer.adamant.im/delegate/${voter.address}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Delegate details"
+                >
+                  {name}
+                </a>
+              {/if}
             {/if}
           </Cell>
           <Cell numeric>

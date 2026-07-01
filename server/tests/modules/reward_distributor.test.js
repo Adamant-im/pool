@@ -37,6 +37,11 @@ jest.unstable_mockModule('../../src/modules/store.js', () => ({
 
     return Number.isFinite(pending) ? pending : 0;
   },
+  buildVoterPublicFields(voter) {
+    return {
+      username: voter.username ?? '',
+    };
+  },
 }));
 
 const RewardDistributor = (await import('../../src/modules/distribute_rewards.js')).default;
@@ -222,6 +227,7 @@ describe('RewardDistributor.findOrCreateVoter', () => {
 
       expect(voter).toStrictEqual({
         ...mockVoter,
+        username: '',
         pending: 0,
         received: 0,
       });

@@ -48,6 +48,33 @@ export function normalizePendingReward(voter) {
   return Number.isFinite(pending) ? pending : 0;
 }
 
+/**
+ * Builds public voter metadata that is safe to expose in the dashboard.
+ * @param {object} voter Voter account returned by the ADAMANT node API
+ * @returns {{username: string, votesCount?: number, balanceADM?: number, weightADM?: number}} Public voter fields
+ */
+export function buildVoterPublicFields(voter) {
+  const votesCount = Number(voter.votesCount);
+  const balance = Number(voter.balance);
+  const publicFields = {
+    username: typeof voter.username === 'string' ? voter.username : '',
+  };
+
+  if (Number.isFinite(votesCount)) {
+    publicFields.votesCount = votesCount;
+  }
+
+  if (Number.isFinite(balance)) {
+    publicFields.balanceADM = balance / SAT;
+  }
+
+  if (Number.isFinite(balance) && votesCount > 0) {
+    publicFields.weightADM = balance / votesCount / SAT;
+  }
+
+  return publicFields;
+}
+
 const store = {
   isDistributingRewards: false,
   periodInfo: {
@@ -217,12 +244,42 @@ const store = {
 
       for (const voter of this.delegate.voters) {
         voter.votesCount = await this.updateVotes(voter.address);
+        await this.updateVoterPublicFields(voter);
       }
 
       log.log(`Updated voter list for delegate ${config.logName}: ${this.delegate.voters.length} accounts.`);
       log.debug(`Updated vote counts for ${this.delegate.voters.length} voters.`);
     } else {
       log.warn(`Failed to get voters for ${config.address}. ${getVotersResponse.errorMessage}.`);
+    }
+  },
+
+  /**
+   * Saves public voter metadata from the current delegate voter response.
+   * @param {object} voter Voter account returned by the ADAMANT node API
+   * @returns {Promise<void>}
+   */
+  async updateVoterPublicFields(voter) {
+    if (!utils.isAdmAddress(voter.address)) {
+      log.warn('Skipping public voter metadata update for a voter with a missing or malformed address.');
+      return;
+    }
+
+    try {
+      await mongo.votersCollection.updateOne(
+          { address: voter.address },
+          {
+            $set: buildVoterPublicFields(voter),
+            $setOnInsert: {
+              address: voter.address,
+              pending: 0,
+              received: 0,
+            },
+          },
+          { upsert: true },
+      );
+    } catch (error) {
+      log.warn(`Failed to update public voter metadata for ${voter.address}: ${error}`);
     }
   },
 

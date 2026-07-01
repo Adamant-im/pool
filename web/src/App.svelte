@@ -24,19 +24,27 @@
     isUpdating = true;
 
     try {
+      let apiVoters;
+
       [
-        voters,
+        apiVoters,
         transactions,
         store,
         system,
       ] = await getAll();
 
-      // merge and remove duplicates
-      voters = voters.concat(
-          store.delegate.voters.filter((storeVoter) => (
-            !voters.find((dbVoter) => storeVoter.address === dbVoter.address)
-          )),
-      );
+      const activeVoters = store.delegate.voters ?? [];
+      const activeVotersByAddress = new Map(activeVoters.map((voter) => [voter.address, voter]));
+
+      voters = apiVoters
+          .map((dbVoter) => {
+            const activeVoter = activeVotersByAddress.get(dbVoter.address);
+
+            return activeVoter ? { ...activeVoter, ...dbVoter, username: activeVoter.username || dbVoter.username } : dbVoter;
+          })
+          .concat(activeVoters.filter((storeVoter) => (
+            !apiVoters.find((dbVoter) => storeVoter.address === dbVoter.address)
+          )));
     } finally {
       setTimeout(() => (isUpdating = false), 1000);
     }
@@ -92,13 +100,13 @@
     votesWeight={store?.delegate.votesWeight}
     activeAddresses={new Set((store?.delegate.voters ?? []).map((voter) => voter.address))}
     delegate={store?.delegate}
-    names={new Map((store?.delegate.voters ?? []).filter((voter) => voter.username).map((voter) => [voter.address, voter.username]))}
+    names={new Map(voters.filter((voter) => voter.username).map((voter) => [voter.address, voter.username]))}
   />
 
   <TransactionTable
     rows={transactions}
     delegate={store?.delegate}
-    names={new Map((store?.delegate.voters ?? []).filter((voter) => voter.username).map((voter) => [voter.address, voter.username]))}
+    names={new Map(voters.filter((voter) => voter.username).map((voter) => [voter.address, voter.username]))}
   />
 </main>
 

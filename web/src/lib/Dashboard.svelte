@@ -64,25 +64,35 @@
   }
 </script>
 
+<style>
+  .dashboard-metrics {
+    border: 1px solid hsla(0, 0%, 100%, .18);
+    border-radius: .25rem;
+    padding: 1rem;
+  }
+</style>
+
 <div>
-  <div class="flex flex-wrap items-center mt-6 gap-6">
-    {#each items as item (item.name)}
-      <DashboardItem
-        name={item.name}
-        value={item.value}
-        isADM={item.isADM}
-      />
-    {/each}
-  </div>
-  <div class="flex flex-wrap items-center mt-6 gap-6">
-    {#each smallItems as item (item.name)}
-      <DashboardItem
-        name={item.name}
-        value={item.value}
-        isADM={item.isADM}
-        isSmall={true}
-        needAttention={item.needAttention}
-      />
-    {/each}
+  <div class="dashboard-metrics mt-6">
+    <div class="flex flex-wrap items-center gap-6">
+      {#each items as item (item.name)}
+        <DashboardItem
+          name={item.name}
+          value={item.value}
+          isADM={item.isADM}
+        />
+      {/each}
+    </div>
+    <div class="flex flex-wrap items-center mt-6 gap-6">
+      {#each smallItems as item (item.name)}
+        <DashboardItem
+          name={item.name}
+          value={item.value}
+          isADM={item.isADM}
+          isSmall={true}
+          needAttention={item.needAttention}
+        />
+      {/each}
+    </div>
   </div>
 </div>

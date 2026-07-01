@@ -46,15 +46,30 @@
     font-weight: bold;
   }
 
-  .delegate-name {
+  .address-name {
     display: block;
     margin-top: .125rem;
   }
 
+  .table-heading {
+    display: flex;
+    align-items: flex-end;
+    gap: .5rem;
+    width: 100%;
+  }
+
+  .table-title {
+    display: flex;
+    align-items: baseline;
+    gap: .5rem;
+  }
+
   .table-controls {
+    flex: 1 1 auto;
     margin-left: auto;
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: .5rem;
   }
 
@@ -77,14 +92,31 @@
   .filter-input:focus {
     border-color: var(--mdc-theme-primary);
   }
+
+  @media (max-width: 42rem) {
+    .table-heading {
+      flex-wrap: wrap;
+    }
+
+    .table-controls {
+      width: 100%;
+    }
+
+    .filter-input {
+      flex: 1 1 12rem;
+      min-width: 0;
+    }
+  }
 </style>
 
 <div class="max-w-280 w-full mt-6">
-  <div class="text-xl flex gap-2 items-end mb-4">
-    Transactions
-    <span class="text-secondary text-sm font-medium">
-      {transactions.length}
-    </span>
+  <div class="table-heading text-xl mb-4">
+    <div class="table-title">
+      Transactions
+      <span class="text-secondary text-sm font-medium">
+        {transactions.length}
+      </span>
+    </div>
     <div class="table-controls">
       <input
         class="filter-input"
@@ -137,23 +169,24 @@
         <Row>
           <Cell>{index + 1 + currentPage * perPage}</Cell>
           <Cell>
+            {@const name = itemName(item)}
             {#if delegate && item.address === delegate.address}
               <a
-                      href={`https://explorer.adamant.im/delegate/${item.address}`}
+                      href={`https://explorer.adamant.im/address/${item.address}`}
                       target="_blank"
                       rel="noreferrer"
-                      title="Delegate details"
+                      title="Address details"
               >
                 { item.address }
               </a>
               <a
-                      class="delegate-name"
+                      class="address-name"
                       href={`https://explorer.adamant.im/delegate/${item.address}`}
                       target="_blank"
                       rel="noreferrer"
                       title="Delegate details"
               >
-                {delegate.username} <sub>{delegate.rank}</sub>
+                {name}
               </a>
             {:else}
               <a
@@ -164,6 +197,17 @@
               >
                 { item.address }
               </a>
+              {#if name}
+                <a
+                        class="address-name"
+                        href={`https://explorer.adamant.im/delegate/${item.address}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Delegate details"
+                >
+                  {name}
+                </a>
+              {/if}
             {/if}
           </Cell>
           <Cell>

@@ -3,7 +3,7 @@ import {
   SAT,
 } from '../defines.js';
 
-import store, { normalizePendingReward } from './store.js';
+import store, { buildVoterPublicFields, normalizePendingReward } from './store.js';
 
 import { config, log, notifier, utils } from '../helpers/index.js';
 import mongo from '../repository/mongodb/index.js';
@@ -292,6 +292,7 @@ class RewardDistributor {
 
     const newVoter = {
       address,
+      ...buildVoterPublicFields(voter),
       pending: 0,
       received: 0,
     };
