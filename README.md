@@ -4,7 +4,11 @@ ADAMANT Forging Pool calculates delegate voter rewards, sends scheduled payouts,
 
 This repository is the maintained successor of the older [`adamant-pool`](https://github.com/Adamant-im/adamant-pool) implementation.
 
-![ADAMANT Forging Pool](./assets/logo.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/logo-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="./assets/logo.png">
+  <img alt="ADAMANT Forging Pool" src="./assets/logo.png">
+</picture>
 
 ## Features
 
