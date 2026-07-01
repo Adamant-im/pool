@@ -7,14 +7,30 @@
 
   import {formatDate, formatNumber, sortBy, splitWholeDecimalNumberParts} from '../utils.js';
 
-  let {rows = []} = $props();
+  let {rows = [], delegate, names = new Map()} = $props();
 
+  let query = $state('');
   let perPage = $state(10);
   let currentPage = $state(0);
   let sortDirection = $state('descending');
   let sort = $state('timeStamp');
 
-  const transactions = $derived(sortBy(sortDirection, sort, rows.slice()));
+  function itemName(item) {
+    return names.get(item.address)
+      || (delegate && item.address === delegate.address ? (delegate.username || '') : '')
+      || '';
+  }
+
+  const filteredRows = $derived(
+    rows.filter((item) => {
+      const q = query.trim().toLowerCase();
+      if (!q) return true;
+
+      return item.address.toLowerCase().includes(q) || itemName(item).toLowerCase().includes(q);
+    }),
+  );
+
+  const transactions = $derived(sortBy(sortDirection, sort, filteredRows.slice()));
   const lastPage = $derived(Math.max(Math.ceil(transactions.length / perPage) - 1, 0));
   const start = $derived(currentPage * perPage);
   const end = $derived(Math.min(start + perPage, transactions.length));
@@ -29,6 +45,38 @@
   .bold-white {
     font-weight: bold;
   }
+
+  .delegate-name {
+    display: block;
+    margin-top: .125rem;
+  }
+
+  .table-controls {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+
+  .filter-input {
+    min-width: 12rem;
+    padding: .25rem .5rem;
+    font-size: .875rem;
+    font-weight: 400;
+    color: #fff;
+    background: transparent;
+    border: 1px solid hsla(0, 0%, 100%, .24);
+    border-radius: .25rem;
+    outline: none;
+  }
+
+  .filter-input::placeholder {
+    color: #8a8a8a;
+  }
+
+  .filter-input:focus {
+    border-color: var(--mdc-theme-primary);
+  }
 </style>
 
 <div class="max-w-280 w-full mt-6">
@@ -37,6 +85,15 @@
     <span class="text-secondary text-sm font-medium">
       {transactions.length}
     </span>
+    <div class="table-controls">
+      <input
+        class="filter-input"
+        type="text"
+        placeholder="Address or name"
+        bind:value={query}
+        oninput={() => (currentPage = 0)}
+      />
+    </div>
   </div>
    <DataTable
     sortable
@@ -47,7 +104,7 @@
   >
     <Head>
       <Row>
-        <Cell numeric  columnId="id">
+        <Cell columnId="id">
           <Label>#</Label>
         </Cell>
         <Cell style="width: 100%;" columnId="address">
@@ -78,16 +135,36 @@
     <Body>
       {#each slice as item, index}
         <Row>
-          <Cell numeric>{index + 1 + currentPage * perPage}</Cell>
+          <Cell>{index + 1 + currentPage * perPage}</Cell>
           <Cell>
-            <a
-                    href={`https://explorer.adamant.im/address/${item.address}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    title="Address details"
-            >
-              { item.address }
-            </a>
+            {#if delegate && item.address === delegate.address}
+              <a
+                      href={`https://explorer.adamant.im/delegate/${item.address}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Delegate details"
+              >
+                { item.address }
+              </a>
+              <a
+                      class="delegate-name"
+                      href={`https://explorer.adamant.im/delegate/${item.address}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Delegate details"
+              >
+                {delegate.username} <sub>{delegate.rank}</sub>
+              </a>
+            {:else}
+              <a
+                      href={`https://explorer.adamant.im/address/${item.address}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Address details"
+              >
+                { item.address }
+              </a>
+            {/if}
           </Cell>
           <Cell>
             <a

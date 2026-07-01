@@ -7,17 +7,43 @@
 
   import {formatNumber, splitWholeDecimalNumberParts, sortBy} from '../utils.js';
 
-  let {rows = [], votesWeight, activeAddresses = new Set()} = $props();
+  let {rows = [], votesWeight, activeAddresses = new Set(), delegate, names = new Map()} = $props();
 
   let activeOnly = $state(false);
+  let query = $state('');
   let perPage = $state(10);
   let currentPage = $state(0);
   let sortDirection = $state('descending');
   let sort = $state('pending');
 
+  function voterName(voter) {
+    return names.get(voter.address)
+      || voter.username
+      || (delegate && voter.address === delegate.address ? delegate.username : '')
+      || '';
+  }
+
+  // Precompute each voter's share of the total vote weight so the column is sortable.
+  const withPercent = $derived(rows.map((voter) => ({
+    ...voter,
+    weightPercent: activeAddresses.has(voter.address) && votesWeight && voter.weightADM
+      ? voter.weightADM / votesWeight * 10000000000
+      : null,
+  })));
+
   const filteredRows = $derived(
-    activeOnly ? rows.filter((voter) => activeAddresses.has(voter.address)) : rows,
+    withPercent.filter((voter) => {
+      if (activeOnly && !activeAddresses.has(voter.address)) return false;
+
+      const q = query.trim().toLowerCase();
+      if (q && !voter.address.toLowerCase().includes(q) && !voterName(voter).toLowerCase().includes(q)) {
+        return false;
+      }
+
+      return true;
+    }),
   );
+
   const voters = $derived(sortBy(sortDirection, sort, filteredRows.slice()));
   const lastPage = $derived(Math.max(Math.ceil(voters.length / perPage) - 1, 0));
   const start = $derived(currentPage * perPage);
@@ -29,10 +55,10 @@
     if (currentPage > lastPage) currentPage = lastPage;
   });
 
-  function calcWeightPercent(weightADM) {
-    const weightPercent = weightADM / votesWeight * 10000000000;
+  function formatWeightPercent(weightPercent) {
+    if (weightPercent == null) return null;
 
-    return weightPercent > 0 && weightPercent < 0.01 ? '> 0.01' : weightPercent.toFixed(2);
+    return weightPercent > 0 && weightPercent < 0.01 ? '> 0.01%' : `${weightPercent.toFixed(2)}%`;
   }
 </script>
 
@@ -41,11 +67,42 @@
     font-weight: bold;
   }
 
+  .delegate-name {
+    display: block;
+    margin-top: .125rem;
+  }
+
+  .table-controls {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+
+  .filter-input {
+    min-width: 12rem;
+    padding: .25rem .5rem;
+    font-size: .875rem;
+    font-weight: 400;
+    color: #fff;
+    background: transparent;
+    border: 1px solid hsla(0, 0%, 100%, .24);
+    border-radius: .25rem;
+    outline: none;
+  }
+
+  .filter-input::placeholder {
+    color: #8a8a8a;
+  }
+
+  .filter-input:focus {
+    border-color: var(--mdc-theme-primary);
+  }
+
   .active-filter {
     display: flex;
     align-items: center;
     gap: .375rem;
-    margin-left: auto;
     font-size: .875rem;
     color: #b8b8b8;
     cursor: pointer;
@@ -64,14 +121,23 @@
     <span class="text-secondary text-sm font-medium">
       {voters.length}
     </span>
-    <label class="active-filter">
+    <div class="table-controls">
       <input
-        type="checkbox"
-        bind:checked={activeOnly}
-        onchange={() => (currentPage = 0)}
+        class="filter-input"
+        type="text"
+        placeholder="Address or name"
+        bind:value={query}
+        oninput={() => (currentPage = 0)}
       />
-      active voters only
-    </label>
+      <label class="active-filter">
+        <input
+          type="checkbox"
+          bind:checked={activeOnly}
+          onchange={() => (currentPage = 0)}
+        />
+        Active
+      </label>
+    </div>
   </div>
   <DataTable
     sortable
@@ -82,7 +148,7 @@
   >
     <Head>
       <Row>
-        <Cell numeric  columnId="id">
+        <Cell columnId="id">
           <Label>#</Label>
         </Cell>
         <Cell style="width: 100%;" columnId="address">
@@ -116,7 +182,7 @@
           <Label>Weight</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
-        <Cell numeric columnId="timeStamp">
+        <Cell numeric columnId="weightPercent">
           <Label>% of Total votes</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
@@ -125,16 +191,36 @@
     <Body>
       {#each slice as voter, index}
         <Row>
-          <Cell numeric>{ index + 1 + currentPage * perPage }</Cell>
+          <Cell>{ index + 1 + currentPage * perPage }</Cell>
           <Cell>
-            <a
-                    href={`https://explorer.adamant.im/address/${voter.address}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    title="Address details"
-            >
-              { voter.address }
-            </a>
+            {#if delegate && voter.address === delegate.address}
+              <a
+                      href={`https://explorer.adamant.im/delegate/${voter.address}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Delegate details"
+              >
+                { voter.address }
+              </a>
+              <a
+                      class="delegate-name"
+                      href={`https://explorer.adamant.im/delegate/${voter.address}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Delegate details"
+              >
+                {delegate.username} <sub>{delegate.rank}</sub>
+              </a>
+            {:else}
+              <a
+                      href={`https://explorer.adamant.im/address/${voter.address}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Address details"
+              >
+                { voter.address }
+              </a>
+            {/if}
           </Cell>
           <Cell numeric>
             {#if voter.pending}
@@ -145,7 +231,7 @@
                   <span class="bold-white">{formatted.whole}</span>
               {/if}
             {:else}
-              -
+              —
             {/if}
           </Cell>
           <Cell numeric>
@@ -157,7 +243,7 @@
                 <span class="bold-white">{formatted.whole}</span>
               {/if}
             {:else}
-              -
+              —
             {/if}
           </Cell>
           <Cell numeric>
@@ -169,7 +255,7 @@
                   <span class="bold-white">{formatted.whole}</span>
               {/if}
             {:else}
-              -
+              —
             {/if}
           </Cell>
           <Cell numeric>
@@ -181,11 +267,13 @@
                   <span class="bold-white">{formatted.whole}</span>
               {/if}
             {:else}
-              -
+              —
             {/if}
           </Cell>
           <Cell numeric>
-            {#if voter.weightADM}
+            {#if !activeAddresses.has(voter.address)}
+              Not active
+            {:else if voter.weightADM}
               {@const formatted = splitWholeDecimalNumberParts(formatNumber(voter.weightADM))}
               {#if formatted.decimal}
                 <span class="bold-white">{formatted.whole}</span><span>{formatted.decimal}</span>
@@ -193,19 +281,19 @@
                   <span class="bold-white">{formatted.whole}</span>
               {/if}
             {:else}
-              -
+              —
             {/if}
           </Cell>
           <Cell numeric>
-            {#if votesWeight && voter.weightADM}
-              {@const formatted = splitWholeDecimalNumberParts(calcWeightPercent(voter.weightADM))}
+            {#if voter.weightPercent != null}
+              {@const formatted = splitWholeDecimalNumberParts(formatWeightPercent(voter.weightPercent))}
               {#if formatted.decimal}
                 <span class="bold-white">{formatted.whole}</span><span>{formatted.decimal}</span>
               {:else}
                   <span class="bold-white">{formatted.whole}</span>
               {/if}
             {:else}
-              -
+              —
             {/if}
           </Cell>
         </Row>

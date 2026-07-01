@@ -91,10 +91,14 @@
     rows={voters}
     votesWeight={store?.delegate.votesWeight}
     activeAddresses={new Set((store?.delegate.voters ?? []).map((voter) => voter.address))}
+    delegate={store?.delegate}
+    names={new Map((store?.delegate.voters ?? []).filter((voter) => voter.username).map((voter) => [voter.address, voter.username]))}
   />
 
   <TransactionTable
     rows={transactions}
+    delegate={store?.delegate}
+    names={new Map((store?.delegate.voters ?? []).filter((voter) => voter.username).map((voter) => [voter.address, voter.username]))}
   />
 </main>
 
