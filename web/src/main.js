@@ -1,9 +1,13 @@
 import './app.css';
 import App from './App.svelte';
-import 'virtual:windi.css';
+import { mount } from 'svelte';
 
-const app = new App({
-  target: document.getElementById('app'),
+const target = document.getElementById('app');
+
+if (!target) {
+  throw new Error('Cannot mount ADAMANT Forging Pool dashboard: #app element is missing.');
+}
+
+mount(App, {
+  target,
 });
-
-export default app;

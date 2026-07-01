@@ -1,9 +1,13 @@
 import RewardDistributor from './distribute_rewards.js';
 
-import {dbBlocks} from '../helpers/DB.js';
-import {log} from '../helpers/index.js';
+import { log } from '../helpers/index.js';
+import mongo from '../repository/mongodb/index.js';
 
 class QueueNode {
+  /**
+   * Creates a queue node for a forged block.
+   * @param {object} value Forged block queued for reward distribution
+   */
   constructor(value) {
     this.value = value;
     this.next = null;
@@ -11,6 +15,9 @@ class QueueNode {
 }
 
 class BlockParser {
+  /**
+   * Creates an in-memory FIFO queue for forged blocks awaiting parsing.
+   */
   constructor() {
     this.queue = {};
     this.length = 0;
@@ -25,12 +32,22 @@ class BlockParser {
     return this.length === 0;
   }
 
+  /**
+   * Checks whether a block id is already queued.
+   * @param {string|number} blockId Block id returned by the ADAMANT node API
+   * @returns {boolean} Whether the block is already queued
+   */
   queued(blockId) {
     return !!this.queue[blockId];
   }
 
+  /**
+   * Adds a forged block to the queue unless it is already queued.
+   * @param {object} block Forged block returned by the ADAMANT node API
+   * @returns {void}
+   */
   enqueue(block) {
-    const {id} = block;
+    const { id } = block;
 
     if (!this.queued(id)) {
       const node = new QueueNode(block);
@@ -48,9 +65,13 @@ class BlockParser {
     }
   }
 
+  /**
+   * Removes and returns the next queued block.
+   * @returns {object|undefined} Next block when the queue is not empty
+   */
   dequeue() {
     if (!this.isEmpty) {
-      const {value: block} = this.head;
+      const { value: block } = this.head;
 
       delete this.queue[block.id];
 
@@ -69,6 +90,10 @@ class BlockParser {
     }
   }
 
+  /**
+   * Parses queued blocks sequentially while preventing overlapping runs.
+   * @returns {Promise<void>}
+   */
   async run() {
     if (!this.isEmpty && !this.isLocked) {
       this.isLocked = true;
@@ -78,7 +103,7 @@ class BlockParser {
       try {
         await this.parse(block);
       } catch (error) {
-        const errorTemplate = `Error while processing ${block.id} (height ${block.height})`;
+        const errorTemplate = `Error while processing block ${block.id} (height ${block.height})`;
 
         log.error(`${errorTemplate}: ${error}`);
       }
@@ -89,33 +114,66 @@ class BlockParser {
     }
   }
 
+  /**
+   * Saves a new block or retries reward distribution for an unprocessed block.
+   * @param {object} block Forged block returned by the ADAMANT node API
+   * @returns {Promise<void>}
+   */
   async parse(block) {
-    const {id} = block;
+    const { id, height } = block;
 
-    const savedBlock = await dbBlocks.findOne({id});
+    // Untrusted node data: the block id is used directly in MongoDB filters, so a
+    // non-scalar id from a malformed or malicious response could become an operator
+    // query (NoSQL injection). Only a string or finite number is a safe block id.
+    if (typeof id !== 'string' && !Number.isFinite(id)) {
+      log.warn('Skipping a forged block with a missing or malformed id from the node response.');
+      return;
+    }
 
-    const rewardDistributer = new RewardDistributor(block);
+    let savedBlock;
+    try {
+      savedBlock = await mongo.blocksCollection.findOne({ id });
+    } catch (error) {
+      log.error(`Failed to parse block ${id} at height ${height}: ${error}`);
+      return;
+    }
 
     if (savedBlock) {
       if (!savedBlock.processed) {
-        log.info(`Re-trying to distribute rewards for block ${block.id} (height ${block.height})…`);
+        log.info(`Re-trying to distribute rewards for block ${id} (height ${height})…`);
 
-        return rewardDistributer.distribute();
+        const rewardDistributor = new RewardDistributor({
+          ...block,
+          ...savedBlock,
+        });
+
+        await rewardDistributor.distribute();
       }
     } else {
-      log.info(`New block forged: ${block.id} (height ${block.height}).`);
+      log.info(`New block forged: ${id} (height ${height}).`);
 
-      const insertBlock = await dbBlocks.insert(block);
-
-      if (insertBlock) {
-        log.info(
-            `Block successfully saved: ${block.id} (height ${block.height}). Distributing rewards…`,
-        );
-
-        return rewardDistributer.distribute();
-      } else {
-        log.warn(`Failed to save block ${block.id} (height ${block.height}).`);
+      try {
+        await mongo.blocksCollection.insertOne({
+          ...block,
+          processed: false,
+          rewardedAddresses: [],
+        });
+      } catch (error) {
+        log.error(`Failed to parse block ${id} at height ${height}: ${error}`);
+        return;
       }
+
+      log.info(
+          `Forged block successfully stored: ${id} (height ${height}). Distributing rewards…`,
+      );
+
+      const rewardDistributor = new RewardDistributor({
+        ...block,
+        processed: false,
+        rewardedAddresses: [],
+      });
+
+      await rewardDistributor.distribute();
     }
   }
 }

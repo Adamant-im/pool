@@ -1,4 +1,4 @@
-<script>
+<script lang="js">
   import Button from '@smui/button';
   import {Label} from '@smui/common';
 
@@ -13,29 +13,38 @@
 
   import {getAll} from './api.js';
 
-  let transactions = [];
-  let voters = [];
-  let store; let system;
+  let transactions = $state([]);
+  let voters = $state([]);
+  let store = $state();
+  let system = $state();
 
-  let isUpdating = false;
+  let isUpdating = $state(false);
 
   const updateAll = async () => {
     isUpdating = true;
 
     try {
+      let apiVoters;
+
       [
-        voters,
+        apiVoters,
         transactions,
         store,
         system,
       ] = await getAll();
 
-      // merge and remove duplicates
-      voters = voters.concat(
-          store.delegate.voters.filter((storeVoter) => (
-            !voters.find((dbVoter) => storeVoter.address === dbVoter.address)
-          )),
-      );
+      const activeVoters = store.delegate.voters ?? [];
+      const activeVotersByAddress = new Map(activeVoters.map((voter) => [voter.address, voter]));
+
+      voters = apiVoters
+          .map((dbVoter) => {
+            const activeVoter = activeVotersByAddress.get(dbVoter.address);
+
+            return activeVoter ? { ...activeVoter, ...dbVoter, username: activeVoter.username || dbVoter.username } : dbVoter;
+          })
+          .concat(activeVoters.filter((storeVoter) => (
+            !apiVoters.find((dbVoter) => storeVoter.address === dbVoter.address)
+          )));
     } finally {
       setTimeout(() => (isUpdating = false), 1000);
     }
@@ -55,7 +64,7 @@
         Dashboard
       </div>
 
-      <Button variant="raised" on:click={updateAll} disabled={isUpdating}>
+      <Button variant="raised" onclick={updateAll} disabled={isUpdating}>
         <Label>
           <div class="flex gap-2 items-center">
             <UpdateIcon/>
@@ -72,8 +81,11 @@
           {store?.delegate.username}
         </a>
       </b>
+      {#if system?.locked}
+        <span class="text-amber-600">(waiting for password to unlock payouts…)</span>
+      {/if}
       distributes {system?.reward_percentage}% rewards to
-      voters {system?.donate_percentage ? `and donates ${system?.donate_percentage}% to ADAMANT Foundation` : '' } with
+      voters {system?.donate_percentage ? `and donates ${system?.donate_percentage}% to ADAMANT developer community` : '' } with
       payouts every {system?.payoutperiod}. Minimum payout is {system?.minpayout} ADM.
     </p>
 
@@ -86,10 +98,15 @@
   <VoterTable
     rows={voters}
     votesWeight={store?.delegate.votesWeight}
+    activeAddresses={new Set((store?.delegate.voters ?? []).map((voter) => voter.address))}
+    delegate={store?.delegate}
+    names={new Map(voters.filter((voter) => voter.username).map((voter) => [voter.address, voter.username]))}
   />
 
   <TransactionTable
     rows={transactions}
+    delegate={store?.delegate}
+    names={new Map(voters.filter((voter) => voter.username).map((voter) => [voter.address, voter.username]))}
   />
 </main>
 

@@ -1,5 +1,11 @@
-import {SAT, EPOCH} from './const.js';
+import { ADM_ADDRESS_REGEX, EPOCH, SAT } from '../defines.js';
 
+/**
+ * Replaces `{token}` placeholders in a template with values from a date parts object.
+ * @param {string} text Template containing `{token}` placeholders
+ * @param {object} dateObject Map of token names to their replacement strings
+ * @returns {string} Template with placeholders substituted
+ */
 function replaceWithDate(text, dateObject) {
   return text.replace(/{([a-zA-Z_]*)}/g, (_, digit) => dateObject[digit]);
 }
@@ -15,6 +21,21 @@ export default {
     const _toString = Object.prototype.toString;
 
     return _toString.call(val) === '[object Object]';
+  },
+
+  /**
+   * Validates an ADM account address from untrusted input.
+   *
+   * The value must be a string shaped like an ADM address (`U` followed by at
+   * least six digits, matching the `adamant-api` SDK validator). Rejecting
+   * non-strings is what keeps node-supplied values out of MongoDB query
+   * operators (e.g. `{ $ne: null }`) and away from transaction signing as a
+   * payout destination.
+   * @param {unknown} value Candidate ADM address, typically from a node response or config
+   * @return {boolean} True when the value is a syntactically valid ADM address
+   */
+  isAdmAddress(value) {
+    return typeof value === 'string' && ADM_ADDRESS_REGEX.test(value);
   },
 
   /**
@@ -39,12 +60,20 @@ export default {
     return epochTime * 1000 + EPOCH;
   },
 
+  /**
+   * Converts an amount in sats to a fixed-precision ADM string.
+   * @param {number|string} sats Amount in sats (1 ADM = 1e8 sats)
+   * @param {number} [decimals=8] Number of decimal places to keep
+   * @return {string} Amount in ADM, fixed to `decimals` places
+   */
   satsToADM(sats, decimals = 8) {
-    const adm = (+sats / SAT).toFixed(decimals);
-
-    return adm;
+    return (+sats / SAT).toFixed(decimals);
   },
 
+  /**
+   * Returns the current Unix timestamp in milliseconds.
+   * @return {number}
+   */
   unix() {
     return Date.now();
   },
@@ -83,6 +112,12 @@ export default {
     return formattedDate;
   },
 
+  /**
+   * Formats a number with thin-space thousand separators, optionally bolding the integer part.
+   * @param {number|string} num Number to format
+   * @param {boolean} [doBold] Whether to wrap the integer part in Markdown bold markers
+   * @return {string} Formatted number string
+   */
   thousandSeparator(num, doBold) {
     const parts = (num + '').split('.');
     const main = parts[0];
@@ -107,10 +142,20 @@ export default {
     return output;
   },
 
+  /**
+   * Returns the smallest positive value representable at the given decimal precision.
+   * @param {number} decimals Number of decimal places
+   * @return {number} Precision step, e.g. `0.01` for 2 decimals
+   */
   getPrecision(decimals) {
     return +(Math.pow(10, -decimals).toFixed(decimals));
   },
 
+  /**
+   * Extracts the file name from a module path or id.
+   * @param {string} id Module path using `/` or `\` separators
+   * @return {string} Trailing file name, or an empty string when no separator is present
+   */
   getModuleName(id) {
     let n = id.lastIndexOf('\\');
 

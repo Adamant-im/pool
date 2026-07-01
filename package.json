@@ -1,39 +1,57 @@
 {
   "name": "adamant-pool",
-  "version": "3.0.0",
-  "description": "ADAMANT Forging Pool",
+  "version": "3.1.0",
+  "description": "ADAMANT delegate forging pool with automated voter rewards, payouts, and dashboard",
   "main": "server/src/app.js",
+  "bin": {
+    "adm-pool": "server/bin/adm-pool.js"
+  },
   "scripts": {
     "start": "node .",
-    "prepare": "husky install",
-    "postinstall": "npm --prefix ./server install && npm --prefix ./web install",
-    "build:web": "npm --prefix ./web run build"
+    "adm-pool": "node server/bin/adm-pool.js",
+    "prepare": "husky",
+    "install:all": "npm install --ignore-scripts && npm --prefix ./server install --ignore-scripts && npm --prefix ./web install --ignore-scripts && npm --prefix ./scripts/migrate-lowdb-mongodb install --ignore-scripts",
+    "test": "npm --prefix ./server run test",
+    "build:web": "npm --prefix ./web run build",
+    "lint": "npm --prefix ./server run lint && npm --prefix ./web run lint",
+    "lint:fix": "npm --prefix ./server run lint:fix && npm --prefix ./web run lint:fix",
+    "format": "prettier --write \"*.md\" \"*.json\" \"*.jsonc\" \"server/package.json\" \"web/package.json\" \"scripts/migrate-lowdb-mongodb/package.json\"",
+    "format:check": "prettier --check \"*.md\" \"*.json\" \"*.jsonc\" \"server/package.json\" \"web/package.json\" \"scripts/migrate-lowdb-mongodb/package.json\""
   },
-	"keywords": [
-		"forging",
-		"pool",
-		"mining",
-		"rewards",
-		"dpos",
-		"adm",
-		"adamant",
-		"blockchain",
-		"crypto",
-		"cryptocurrency"
-	],
-  "author": "ADAMANT Tech Labs <devs@adamant.im>",
+  "keywords": [
+    "adm",
+    "adamant",
+    "blockchain",
+    "delegates",
+    "decentralization",
+    "dpos",
+    "forging",
+    "pool",
+    "rewards",
+    "voters",
+    "payouts",
+    "crypto",
+    "cryptocurrency",
+    "dashboard"
+  ],
+  "author": "ADAMANT community developers <devs@adamant.im>, ADAMANT Foundation <devs@adamant.im>, ADAMANT Tech Labs <devs@adamant.im>",
   "license": "GPL-3.0",
-  "devDependencies": {
-    "@commitlint/cli": "^17.4.2",
-    "@commitlint/config-conventional": "^17.4.2",
-    "husky": "^8.0.3"
+  "engines": {
+    "node": ">=22.13.0",
+    "npm": ">=10"
   },
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/Adamant-im/pool.git"
-	},
-	"bugs": {
-		"url": "https://github.com/Adamant-im/pool/issues"
-	},
-	"homepage": "https://github.com/Adamant-im/pool#readme"
+  "devDependencies": {
+    "@commitlint/cli": "^21.1.0",
+    "@commitlint/config-conventional": "^21.1.0",
+    "husky": "^9.1.7",
+    "prettier": "^3.9.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Adamant-im/pool.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Adamant-im/pool/issues"
+  },
+  "homepage": "https://github.com/Adamant-im/pool#readme"
 }

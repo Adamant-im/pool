@@ -9,7 +9,7 @@ import {
   dbTrans,
   dbBlocks,
   dbVoters
-} from '../server/src/helpers/DB.js';
+} from '../server/src/repository/lowdb/DB.js';
 
 let [,, targetPath] = process.argv;
 

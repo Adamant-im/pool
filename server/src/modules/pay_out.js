@@ -1,15 +1,19 @@
-import store from './store.js';
-
-import {notifier, api, config, log} from '../helpers/index.js';
-import {dbVoters, dbTrans} from '../helpers/DB.js';
 import {
-  SAT,
-  RETRY_PAYOUTS_TIMEOUT,
-  RETRY_PAYOUTS_COUNT,
   FEE,
-} from '../helpers/const.js';
+  RETRY_PAYOUTS_COUNT,
+  RETRY_PAYOUTS_TIMEOUT,
+  SAT,
+} from '../defines.js';
+import store, { normalizePendingReward } from './store.js';
+import secret from './secret.js';
+
+import { adamantApiClient, config, log, notifier, utils } from '../helpers/index.js';
+import mongo from '../repository/mongodb/index.js';
 
 class Payer {
+  /**
+   * Creates a payout coordinator with per-period donation and maintenance state.
+   */
   constructor() {
     this.periodInfo = {
       donatePaid: false,
@@ -19,42 +23,56 @@ class Payer {
     this.retryNo = 0;
   }
 
+  /**
+   * Runs the payout cycle for voters above the minimum payout threshold.
+   * @returns {Promise<void>}
+   */
   async payOut() {
+    // When the passphrase is encrypted and not yet unlocked, the pool cannot
+    // sign transactions. Pending rewards stay in the database and are paid out
+    // once the operator runs `adm-pool unlock`, so nothing is lost.
+    if (!secret.isUnlocked()) {
+      return notifier(
+          `Pool ${config.logName}: Payouts are LOCKED — the encrypted passphrase has not been unlocked. ` +
+          'Run `adm-pool unlock` to enable payouts. Pending rewards are preserved and paid after unlock.',
+          'warn',
+      );
+    }
+
     await this.updateVoters();
 
-    const {votersToReward, pendingUserRewards, periodInfo} = this;
+    const { votersToReward, pendingUserRewards, periodInfo } = this;
     const balance = store.delegate.balance / SAT;
 
     const infoString = this.getBaseInfoString(balance);
 
     if (!votersToReward.length) {
-      return notifier(`Pool ${config.logName}: No pending payouts.\n${infoString}`, 'warn');
+      return notifier(`Pool ${config.logName}: No pending reward payouts.\n${infoString}`, 'warn');
     }
 
-    const {retryNo} = this;
+    const { retryNo } = this;
     const nextRetryNo = retryNo + 1;
 
     if (pendingUserRewards > balance) {
       notifier(
-          `Pool ${config.logName}: Unable to do payouts, retryNo: ${retryNo}. ` +
-          `Balance of the pool is less, than pending payouts. Top up the pool's balance.\n${infoString}`,
+          `Pool ${config.logName}: Unable to do reward payouts, retry #${retryNo}. ` +
+          `The pool balance is lower than pending payout amount. Top up pool balance.\n${infoString}`,
           'error',
       );
 
       return this.retry();
     }
 
-    notifier(
-        retryNo ?
-          `Pool ${config.logName}: Re-tying (${nextRetryNo} of ${RETRY_PAYOUTS_COUNT + 1}) to do payouts.` :
-          `Pool ${config.logName}: Ready to do periodical payouts.\n${infoString}`,
-        'log',
-    );
+    if (retryNo > 0) {
+      log.log(`Retrying reward payouts (${nextRetryNo}/${RETRY_PAYOUTS_COUNT + 1}). ${infoString}`);
+    } else {
+      log.info(`Ready to process scheduled reward payouts. ${infoString}`);
+    }
 
     const {
-      payedUserRewards,
+      paidUserRewards,
       paymentFees,
-      payedCount,
+      paidCount,
       updatedVoters,
       savedTransactions,
     } = await this.payVoters(votersToReward);
@@ -62,7 +80,7 @@ class Payer {
     let maintenanceString = '';
     let donateString = '';
 
-    if (payedCount === votersToReward.length) {
+    if (paidCount === votersToReward.length) {
       maintenanceString = await this.payToMaintenanceWallet();
 
       if (config.donatewallet && config.donate_percentage && !periodInfo.donatePaid) {
@@ -70,14 +88,12 @@ class Payer {
       }
     }
 
-    let payoutInfoString = '';
-
-    const isEveryVoterRewarded = payedCount === votersToReward.length;
-    const isEveryRewardSaved = updatedVoters === payedCount && savedTransactions === payedCount;
+    const isEveryVoterRewarded = paidCount === votersToReward.length;
+    const isEveryRewardSaved = updatedVoters === paidCount && savedTransactions === paidCount;
 
     const notifyType = isEveryRewardSaved ? 'log' : 'warn';
 
-    payoutInfoString = `I've ${isEveryVoterRewarded ? 'successfully' : ''} payed ${isEveryRewardSaved ? 'and saved ' : ''}`;
+    let payoutInfoString = `I have ${isEveryVoterRewarded ? 'successfully ' : ''}paid ${isEveryRewardSaved ? 'and saved ' : ''}`;
 
     if (isEveryVoterRewarded) {
       if (isEveryRewardSaved) {
@@ -85,38 +101,38 @@ class Payer {
       }
 
       payoutInfoString += (
-        `of ${payedCount} payouts, ${payedUserRewards.toFixed(4)} ADM plus ` +
+        `of ${paidCount} voter rewards, ${paidUserRewards.toFixed(4)} ADM plus ` +
         `${paymentFees.toFixed(1)} ADM fees in total.`
       );
     } else {
       payoutInfoString += (
-        `only ${payedCount} of ${votersToReward.length} payouts, ` +
-        `${(payedUserRewards + paymentFees).toFixed(4)} of ${pendingUserRewards.toFixed(4)} ADM.`
+        `only ${paidCount} of ${votersToReward.length} voter rewards, ` +
+        `${(paidUserRewards + paymentFees).toFixed(4)} of ${pendingUserRewards.toFixed(4)} ADM.`
       );
     }
 
     if (!isEveryRewardSaved) {
-      payoutInfoString += `\nThere is an issue${!isEveryVoterRewarded ? ' with database also' : ''}.`;
+      payoutInfoString += `\nThere is an issue${!isEveryVoterRewarded ? ' with reward payouts and database updates' : ' with database updates'}.`;
 
-      if (updatedVoters < payedCount) {
+      if (updatedVoters < paidCount) {
         payoutInfoString += ` I've updated only ${updatedVoters} voters.`;
       }
-      if (savedTransactions < payedCount) {
+      if (savedTransactions < paidCount) {
         payoutInfoString += ` I've saved only ${savedTransactions} transactions.`;
       }
 
-      payoutInfoString += ` You better do these updates in database manually. Check log file for details.`;
+      payoutInfoString += ' Apply the missing database updates manually. Check the log file for details.';
     }
 
     payoutInfoString += maintenanceString;
     payoutInfoString += donateString;
 
-    payoutInfoString += `\nThe pool's balance — ${balance.toFixed(4)} ADM.`;
+    payoutInfoString += `\nThe pool balance — ${balance.toFixed(4)} ADM.`;
 
     if (!isEveryVoterRewarded) {
       const timeoutInMin = ((nextRetryNo * RETRY_PAYOUTS_TIMEOUT) / 1000 / 60).toFixed(1);
 
-      payoutInfoString += `\nI'll re-try to pay the remaining voters in ${timeoutInMin} minutes, retryNo: ${nextRetryNo}.`;
+      payoutInfoString += `\nI will retry the remaining voter payouts in ${timeoutInMin} minutes, retry #${nextRetryNo}.`;
     }
 
     notifier(`Pool ${config.logName}: ${payoutInfoString}`, notifyType);
@@ -132,9 +148,14 @@ class Payer {
     }
   }
 
+  /**
+   * Pays each eligible voter sequentially and records aggregate payout results.
+   * @param {object[]} voters Voter database records with pending rewards
+   * @returns {Promise<{paidUserRewards: number, paymentFees: number, paidCount: number, updatedVoters: number, savedTransactions: number}>}
+   */
   async payVoters(voters) {
-    let payedUserRewards = 0;
-    let payedCount = 0;
+    let paidUserRewards = 0;
+    let paidCount = 0;
     let paymentFees = 0;
 
     let updatedVoters = 0;
@@ -144,9 +165,9 @@ class Payer {
       try {
         const res = await this.payVoter(voter);
 
-        payedUserRewards += res.amount;
+        paidUserRewards += res.amount;
         paymentFees += FEE;
-        payedCount += 1;
+        paidCount += 1;
 
         if (res.isUpdated) {
           updatedVoters += 1;
@@ -156,22 +177,39 @@ class Payer {
           savedTransactions += 1;
         }
       } catch (error) {
-        log.error(`Error while doing payouts for ${voter.address}: ${error}`);
+        log.error(`Error while paying reward to voter ${voter.address}: ${error}`);
       }
     }
 
-    return {payedUserRewards, paymentFees, payedCount, updatedVoters, savedTransactions};
+    return { paidUserRewards, paymentFees, paidCount, updatedVoters, savedTransactions };
   }
 
+  /**
+   * Sends a payout transaction to one voter and saves the voter and transaction records.
+   * @param {object} voter Voter database record with address, pending, and received amounts
+   * @returns {Promise<{amount: number, isUpdated?: boolean, isTransactionSaved?: boolean}|void>}
+   */
   async payVoter(voter) {
-    let {pending, address, received} = voter;
-    const amount = voter.pending - FEE;
+    const { address } = voter;
 
-    const result = {amount};
+    // Defense in depth before signing: never send a payout to a stored record
+    // whose address is not a valid ADM address. Distribution rejects malformed
+    // node addresses before they are stored, so this guards legacy or manually
+    // edited records too.
+    if (!utils.isAdmAddress(address)) {
+      return log.warn('Skipping payout for a voter record with a missing or malformed address.');
+    }
 
-    log.log(`Processing payment of ${amount.toFixed(8)} ADM reward to ${address}…`);
+    const pending = normalizePendingReward(voter);
+    let received = Number(voter.received) || 0;
+    const amount = pending - FEE;
 
-    const payment = await api.sendTokens(config.passPhrase, address, amount);
+    const result = { amount };
+
+    log.debug(`Preparing payout for ${address}: Pending ${pending.toFixed(8)} ADM, fee ${FEE} ADM.`);
+    log.debug(`Processing payment of ${amount.toFixed(8)} ADM reward to ${address}…`);
+
+    const payment = await adamantApiClient.sendTokens(secret.getPassphrase(), address, amount);
 
     if (!payment.success) {
       return log.warn(
@@ -179,12 +217,12 @@ class Payer {
       );
     }
 
-    log.log(`Successfully payed ${amount.toFixed(8)} ADM reward to ${address} with Tx ${payment.data.transactionId}.`);
+    log.log(`Successfully paid ${amount.toFixed(8)} ADM reward to ${address} with Tx ${payment.transactionId}.`);
 
     received += pending;
 
     const transaction = {
-      ...payment.data,
+      ...payment,
       address,
       received, // user received in total, including fees
       payoutcount: pending, // user received this time, including Tx fee
@@ -192,50 +230,61 @@ class Payer {
     };
     delete transaction.success;
 
-    const updateVoter = await dbVoters.update({address}, {
-      received, pending: 0,
-    });
-
-    if (updateVoter) {
-      log.log(
-          `Voter's rewards successfully updated after payout: ${received.toFixed(8)} ADM received in total, ` +
-          `0 ADM pending for ${address}.`,
-      );
-      result.isUpdated = true;
-    } else {
+    try {
+      await mongo.votersCollection.updateOne(
+          { address },
+          {
+            $set: {
+              received,
+              pending: 0,
+            },
+          });
+    } catch {
       log.error(
-          `Failed to update rewards for ${address} after successful payout. ` +
-          `Do it manually: ${received.toFixed(8)} ADM received in total, 0 ADM pending.`,
+          `Failed to update rewards record for ${address} after a successful payout. ` +
+          `You can do it manually: ${received.toFixed(8)} ADM received in total, 0 ADM pending.`,
       );
+      return;
     }
 
-    const insertTransaction = await dbTrans.insert(transaction);
+    log.log(
+        `Voter rewards successfully updated after payout: ${received.toFixed(8)} ADM received in total, ` +
+        `0 ADM pending for ${address}.`,
+    );
+    result.isUpdated = true;
 
-    if (insertTransaction) {
-      log.log(
-          `Successfully saved transaction ${transaction.transactionId} ` +
-          `after payout: ${pending.toFixed(8)} ADM payed to ${address}.`,
-      );
-      result.isTransactionSaved = true;
-    } else {
+    try {
+      await mongo.transactionsCollection.insertOne(transaction);
+    } catch {
       log.error(
-          `Failed to save transaction ${transaction.transactionId} after successful payout. ` +
-          `Do it manually: ${pending.toFixed(8)} ADM payed to ${address}.`,
+          `Failed to save transaction record ${transaction.transactionId} after a successful payout. ` +
+          `You can do it manually: ${pending.toFixed(8)} ADM paid to ${address}.`,
       );
+      return;
     }
+
+    log.log(
+        `Successfully saved transaction record ${transaction.transactionId} ` +
+        `after a successful payout: ${pending.toFixed(8)} ADM paid to ${address}.`,
+    );
+    result.isTransactionSaved = true;
 
     return result;
   }
 
+  /**
+   * Pays the pool maintenance share after all voter payouts have succeeded.
+   * @returns {Promise<string>} Notification text to append to the payout summary
+   */
   async payToMaintenanceWallet() {
     try {
-      const {periodInfo} = this;
-      const {totalForgedADM, userRewardsADM} = store.periodInfo;
+      const { periodInfo } = this;
+      const { totalForgedADM, userRewardsADM } = store.periodInfo;
 
       const donateADM = (config.donate_percentage * totalForgedADM) / 100;
       const maintenanceADM = totalForgedADM - userRewardsADM - donateADM;
 
-      const payAmount = `ADM (${config.poolsShare.toFixed(2)}%) pool's share to maintenance wallet ${config.maintenancewallet}`;
+      const payAmount = `ADM (${config.poolsShare.toFixed(2)}%) pool share to maintenance wallet ${config.maintenancewallet}`;
       const notifyPayAmount = `${maintenanceADM.toFixed(4)} ${payAmount}`;
       const logPayAmount = `${maintenanceADM.toFixed(8)} ${payAmount}`;
 
@@ -244,10 +293,10 @@ class Payer {
       if (config.maintenancewallet) {
         if (!periodInfo.maintenancePaid) {
           if (maintenanceADM - FEE > 0) {
-            log.log(`${logPayAmount}…`);
+            log.debug(`Processing payment of ${logPayAmount} to the maintenance wallet ${config.maintenancewallet}…`);
 
-            const paymentMaintenance = await api.sendTokens(
-                config.passPhrase,
+            const paymentMaintenance = await adamantApiClient.sendTokens(
+                secret.getPassphrase(),
                 config.maintenancewallet,
                 maintenanceADM - FEE,
             );
@@ -255,25 +304,25 @@ class Payer {
             if (paymentMaintenance.success) {
               periodInfo.maintenancePaid = true;
 
-              log.log(`Successfully payed ${logPayAmount} with Tx ${paymentMaintenance.data.transactionId}.`);
+              log.log(`Successfully paid ${logPayAmount} with Tx ${paymentMaintenance.transactionId}.`);
               maintenanceString = `\nSent ${notifyPayAmount}.`;
             } else {
-              maintenanceString = `\nUnable to send ${notifyPayAmount}, do it manually. ${paymentMaintenance.errorMessage}.`;
+              maintenanceString = `\nUnable to send ${notifyPayAmount}, you can do it manually. ${paymentMaintenance.errorMessage}.`;
             }
           } else {
             maintenanceString = (
-              `\nPool's share ${maintenanceADM.toFixed(4)} ADM ` +
-              `(${config.poolsShare.toFixed(2)}%) is less, than Tx fee.`
+              `\nPool share ${maintenanceADM.toFixed(4)} ADM ` +
+              `(${config.poolsShare.toFixed(2)}%) is lower than the Tx fee.`
             );
           }
         }
       } else {
         if (maintenanceADM > 0) {
-          maintenanceString = `\nMaintenance wallet is not set. Leaving pool's share of ${notifyPayAmount}.`;
+          maintenanceString = `\nMaintenance wallet is not set. Leaving pool share ${notifyPayAmount} in the pool.`;
         } else {
           maintenanceString = (
-            `\nMaintenance wallet is not set; Pool's share ${maintenanceADM.toFixed(4)} ` +
-            `ADM (${config.poolsShare.toFixed(2)}%) is less, than Tx fee.`
+            `\nMaintenance wallet is not set; Pool share ${maintenanceADM.toFixed(4)} ` +
+            `ADM (${config.poolsShare.toFixed(2)}%) is lower than the Tx fee.`
           );
         }
       }
@@ -286,10 +335,14 @@ class Payer {
     }
   }
 
+  /**
+   * Pays the configured donation share after all voter payouts have succeeded.
+   * @returns {Promise<string>} Notification text to append to the payout summary
+   */
   async payDonation() {
     try {
-      const {periodInfo} = this;
-      const {totalForgedADM} = store.periodInfo;
+      const { periodInfo } = this;
+      const { totalForgedADM } = store.periodInfo;
 
       const donateADM = (config.donate_percentage * totalForgedADM) / 100;
 
@@ -300,10 +353,10 @@ class Payer {
       let donateString = '';
 
       if (donateADM - FEE > 0) {
-        log.log(`Processing payment of ${logDonationAmount}…`);
+        log.debug(`Processing payment of ${logDonationAmount} to the donation wallet ${config.donatewallet}…`);
 
-        const paymentDonate = await api.sendTokens(
-            config.passPhrase,
+        const paymentDonate = await adamantApiClient.sendTokens(
+            secret.getPassphrase(),
             config.donatewallet,
             donateADM - FEE,
         );
@@ -311,16 +364,16 @@ class Payer {
         if (paymentDonate.success) {
           periodInfo.donatePaid = true;
 
-          log.log(`Successfully payed ${logDonationAmount}.`);
+          log.log(`Successfully paid ${logDonationAmount} with Tx ${paymentDonate.transactionId}.`);
 
           donateString = `\nSent ${notifyDonationAmount}.`;
         } else {
-          donateString = `\nUnable to send ${notifyDonationAmount}, do it manually. ${paymentDonate.errorMessage}.`;
+          donateString = `\nUnable to send ${notifyDonationAmount}, you can do it manually. ${paymentDonate.errorMessage}.`;
         }
       } else {
         donateString = (
           `\nDonation amount ${donateADM.toFixed(4)} ADM ` +
-          `(${config.donate_percentage.toFixed(2)}%) is less, than Tx fee.`
+          `(${config.donate_percentage.toFixed(2)}%) is lower than the Tx fee.`
         );
       }
 
@@ -332,29 +385,38 @@ class Payer {
     }
   }
 
+  /**
+   * Schedules another payout attempt or reports final retry exhaustion.
+   * @returns {void}
+   */
   retry() {
     this.retryNo += 1;
 
-    const {retryNo} = this;
+    const { retryNo } = this;
     const timeout = retryNo * RETRY_PAYOUTS_TIMEOUT;
 
     if (this.retryNo > RETRY_PAYOUTS_COUNT) {
       setTimeout(() => {
         notifier(
             `Pool ${config.logName}: After ${RETRY_PAYOUTS_COUNT + 1} tries, ` +
-            'I didn\'t finished with payouts. Check the log file.',
+            'payouts are still incomplete. Check the log file for details.',
             'error',
         );
       }, 1000);
     } else {
-      log.log(`Re-trying payouts ${retryNo} time in ${timeout / 1000} seconds.`);
+      log.log(`Retrying rewards payout attempt #${retryNo} in ${timeout / 1000} seconds.`);
 
       setTimeout(this.payOut.bind(this), timeout);
     }
   }
 
+  /**
+   * Loads voters and payout totals used by the current payout cycle.
+   * @returns {Promise<void>}
+   */
   async updateVoters() {
-    const voters = await dbVoters.find({});
+    const voters = await mongo.votersCollection.find({}).toArray();
+
     const {
       votersToReward,
       votersBelowMin,
@@ -366,22 +428,37 @@ class Payer {
     this.votersBelowMin = votersBelowMin;
     this.pendingUserRewards = pendingUserRewards;
     this.belowMinRewards = belowMinRewards;
+
+    log.debug(
+        `Loaded payout candidates: ${votersToReward.length} payable voters, ` +
+        `${votersBelowMin.length} below-minimum voters.`,
+    );
   }
 
+  /**
+   * Builds the base payout summary for notifications.
+   * @param {number} balance Current pool account balance in ADM
+   * @returns {string} Human-readable payout summary
+   */
   getBaseInfoString(balance) {
-    const {pendingUserRewards, votersToReward, votersBelowMin, belowMinRewards} = this;
-    const {totalForgedADM, userRewardsADM, forgedBlocks} = store.periodInfo;
+    const { pendingUserRewards, votersToReward, votersBelowMin, belowMinRewards } = this;
+    const { totalForgedADM, userRewardsADM, forgedBlocks } = store.periodInfo;
 
-    let infoString = `Pending ${pendingUserRewards.toFixed(4)} ADM rewards for ${votersToReward.length} voters.`;
-    infoString += `\n${votersBelowMin.length} voters forged less, than minimum ${config.minpayout} ADM, their pending rewards are ${belowMinRewards.toFixed(4)} ADM.`;
-    infoString += `\nThis period the pool forged ${totalForgedADM.toFixed(4)} ADM from ${forgedBlocks} blocks; ${userRewardsADM.toFixed(4)} ADM distributed to users.`;
-    infoString += `\nThe pool's balance — ${balance.toFixed(4)} ADM.`;
+    let infoString = `Pending ${pendingUserRewards.toFixed(4)} ADM rewards to ${votersToReward.length} voters.`;
+    infoString += `\n${votersBelowMin.length} voters have less than the minimum ${config.minpayout} ADM; their pending rewards are ${belowMinRewards.toFixed(4)} ADM.`;
+    infoString += `\nThe pool forged ${totalForgedADM.toFixed(4)} ADM from ${forgedBlocks} blocks this period; ${userRewardsADM.toFixed(4)} ADM distributed to voters.`;
+    infoString += `\nThe pool balance — ${balance.toFixed(4)} ADM.`;
 
     return infoString;
   }
 }
 
-function getVotersRewards(voters) {
+/**
+ * Splits voter records into payable and below-minimum reward groups.
+ * @param {object[]} voters Voter records loaded from storage
+ * @returns {{votersToReward: object[], votersBelowMin: object[], pendingUserRewards: number, belowMinRewards: number}}
+ */
+export function getVotersRewards(voters) {
   const votersToReward = [];
   const votersBelowMin = [];
 
@@ -389,16 +466,18 @@ function getVotersRewards(voters) {
   let belowMinRewards = 0;
 
   voters.forEach((voter) => {
-    if (voter.pending >= config.minpayout) {
+    const pending = normalizePendingReward(voter);
+
+    if (pending >= config.minpayout) {
       votersToReward.push(voter);
-      pendingUserRewards += voter.pending;
+      pendingUserRewards += pending;
     } else {
       votersBelowMin.push(voter);
-      belowMinRewards += voter.pending;
+      belowMinRewards += pending;
     }
   });
 
-  return {votersToReward, votersBelowMin, pendingUserRewards, belowMinRewards};
+  return { votersToReward, votersBelowMin, pendingUserRewards, belowMinRewards };
 }
 
 export default Payer;

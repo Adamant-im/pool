@@ -50,9 +50,32 @@ export default {
   log_level: {
     type: String,
     default: 'log',
+    allowedValues: ['none', 'error', 'warn', 'info', 'log', 'debug'],
+  },
+  controlSocket: {
+    type: String,
+    default: null,
   },
   silent_mode: {
     type: Boolean,
     default: false,
+  },
+  cors: {
+    type: Object,
+    default: {
+      origin: '*',
+      // The API is public, read-only, and uses no cookies or auth, so credentialed
+      // CORS is unnecessary. A wildcard origin combined with credentials is also an
+      // invalid combination browsers refuse. Operators who need credentialed access
+      // must set a specific origin together with credentials: true.
+      credentials: false,
+    },
+  },
+  mongodb: {
+    type: Object,
+    default: {
+      uri: 'mongodb://localhost:27017',
+      dbName: 'adamant-pool',
+    },
   },
 };

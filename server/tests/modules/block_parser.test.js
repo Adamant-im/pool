@@ -1,12 +1,18 @@
-import {jest} from '@jest/globals';
-import {dbBlocks} from '../../src/helpers/DB.js';
+import { jest } from '@jest/globals';
+
+import mongoMock from '../helpers/mongoMock.js';
 
 const mockDistribute = jest.fn();
+
+jest.unstable_mockModule('../../src/repository/mongodb/index.js', () => ({
+  __esModule: true,
+  default: mongoMock,
+}));
 
 jest.unstable_mockModule('../../src/modules/distribute_rewards.js', () => ({
   __esModule: true,
   default: jest.fn().mockImplementation(() => {
-    return {distribute: mockDistribute};
+    return { distribute: mockDistribute };
   }),
 }));
 
@@ -23,7 +29,7 @@ describe('BlockParser', () => {
 
   it('should enqueue all blocks', () => {
     for (let id = 0; id < 3; id += 1) {
-      blockParser.enqueue({id});
+      blockParser.enqueue({ id });
     }
 
     expect(blockParser.length).toBe(3);
@@ -43,41 +49,52 @@ describe('BlockParser', () => {
 
 describe('blockParser.parse', () => {
   beforeEach(() => {
-    dbBlocks.data = {values: []};
-    return dbBlocks.write();
+    mongoMock.resetAll();
   });
 
   const blockParser = new BlockParser();
   const id = 1;
 
   it('should not distribute rewards for processed block', async () => {
-    await dbBlocks.insert({id, processed: true});
+    await mongoMock.blocksCollection.insertOne({ id, processed: true });
 
-    await blockParser.parse({id});
+    await blockParser.parse({ id });
 
-    expect(RewardDistributor).toHaveBeenCalledTimes(1);
+    expect(RewardDistributor).toHaveBeenCalledTimes(0);
     expect(mockDistribute).toHaveBeenCalledTimes(0);
   });
 
   it('should distribute rewards for not processed block', async () => {
-    await dbBlocks.insert({id});
+    await mongoMock.blocksCollection.insertOne({ id });
 
-    await blockParser.parse({id});
+    await blockParser.parse({ id });
 
     expect(RewardDistributor).toHaveBeenCalledTimes(1);
     expect(mockDistribute).toHaveBeenCalledTimes(1);
   });
 
+  it('should skip a block with a malformed id without touching the DB', async () => {
+    await blockParser.parse({ id: { $ne: null }, height: 1 });
+
+    const blocks = await mongoMock.blocksCollection.find({}).toArray();
+
+    expect(blocks).toHaveLength(0);
+    expect(RewardDistributor).toHaveBeenCalledTimes(0);
+    expect(mockDistribute).toHaveBeenCalledTimes(0);
+  });
+
   it('should save new block to DB and distribute', async () => {
-    const savedBlockBeforeParsing = await dbBlocks.findOne({id});
+    const savedBlockBeforeParsing = await mongoMock.blocksCollection.findOne({ id });
 
-    await blockParser.parse({id});
+    await blockParser.parse({ id });
 
-    const savedBlockAfterParsing = await dbBlocks.findOne({id});
+    const savedBlockAfterParsing = await mongoMock.blocksCollection.findOne({ id });
 
     expect(RewardDistributor).toHaveBeenCalledTimes(1);
     expect(mockDistribute).toHaveBeenCalledTimes(1);
     expect(savedBlockBeforeParsing).toBeUndefined();
     expect(savedBlockAfterParsing.id).toBe(id);
+    expect(savedBlockAfterParsing.processed).toBe(false);
+    expect(savedBlockAfterParsing.rewardedAddresses).toStrictEqual([]);
   });
 });

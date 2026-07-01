@@ -1,25 +1,43 @@
 {
-	"main": "src/app.js",
-	"type": "module",
-	"scripts": {
-		"start": "node src/app.js",
-		"lint": "eslint .",
-		"lint:fix": "eslint --fix .",
-		"test": "NODE_OPTIONS=--experimental-vm-modules jest --detectOpenHandles --silent"
-	},
-	"dependencies": {
-		"adamant-api": "^1.8.0",
-		"axios": "^1.2.2",
-		"cors": "^2.8.5",
-		"cron": "^2.2.0",
-		"eslint-plugin-jest": "^27.2.1",
-		"express": "^4.18.2",
-		"jsonminify": "^0.4.2",
-		"lowdb": "^5.0.5"
-	},
-	"devDependencies": {
-		"eslint": "^8.31.0",
-		"eslint-config-google": "^0.14.0",
-		"jest": "^29.3.1"
-	}
+  "name": "adamant-pool-server",
+  "version": "3.1.0",
+  "private": true,
+  "description": "Backend runtime for ADAMANT Forging Pool rewards, payouts, storage, notifications, and HTTP API",
+  "main": "src/app.js",
+  "type": "module",
+  "bin": {
+    "adm-pool": "bin/adm-pool.js"
+  },
+  "scripts": {
+    "start": "node src/app.js",
+    "adm-pool": "node bin/adm-pool.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --silent --forceExit"
+  },
+  "engines": {
+    "node": ">=22.13.0",
+    "npm": ">=10"
+  },
+  "dependencies": {
+    "adamant-api": "^3.0.0",
+    "axios": "^1.18.1",
+    "cors": "^2.8.6",
+    "cron": "^4.4.0",
+    "express": "^5.2.1",
+    "jsonminify": "^0.4.2",
+    "lowdb": "^7.0.1",
+    "mongodb": "^7.4.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@eslint/json": "^2.0.0",
+    "@eslint/markdown": "^8.0.2",
+    "@jest/globals": "^30.4.1",
+    "@stylistic/eslint-plugin": "^5.10.0",
+    "eslint": "^10.6.0",
+    "eslint-plugin-jest": "^29.15.4",
+    "globals": "^17.7.0",
+    "jest": "^30.4.2"
+  }
 }

@@ -1,0 +1,27 @@
+{
+  "name": "migrate-lowdb-mongodb",
+  "version": "1.0.0",
+  "description": "One-time ADAMANT Forging Pool migration from LowDB (v3.0.0) JSON files to MongoDB (v3.1.0+)",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --experimental-test-coverage --test-coverage-include=index.js --test-coverage-lines=100 --test-coverage-functions=100 --test-coverage-branches=100 --test"
+  },
+  "keywords": [
+    "adamant",
+    "pool",
+    "migration",
+    "lowdb",
+    "mongodb"
+  ],
+  "author": "ADAMANT community developers <devs@adamant.im>",
+  "license": "GPL-3.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0",
+    "npm": ">=10"
+  },
+  "dependencies": {
+    "lowdb": "^7.0.1",
+    "mongodb": "^7.4.0"
+  }
+}
