@@ -4,6 +4,7 @@ import { EXIT_CODE_ERROR, UNLOCK_PROMPT_DELAY, UPDATE_BLOCKS_INTERVAL } from './
 import { adamantApiClient, config, log, notifier } from './helpers/index.js';
 import payoutCron from './cron/payout.cron.js';
 
+import { notifyPoolLockedAtStartup, notifyPoolUnlocked } from './modules/lock_notifications.js';
 import blocksChecker from './modules/blocks_checker.js';
 import { promptHidden } from './helpers/prompt.js';
 import secret from './modules/secret.js';
@@ -42,7 +43,9 @@ if (secret.status().mode === 'plain') {
 }
 
 // When the pool is unlocked, process any payout that fell due during the lock.
-secret.on('unlock', () => {
+secret.on('unlock', ({ address }) => {
+  notifyPoolUnlocked(address);
+
   payoutCron.runDeferred().catch((error) => (
     log.error(`Failed to process deferred payouts after unlock: ${error}`)
   ));
@@ -88,6 +91,8 @@ async function maybeUnlockInteractively() {
   }
 
   if (!process.stdin.isTTY) {
+    notifyPoolLockedAtStartup();
+  
     log.warn(
         `Pool ${config.address} started LOCKED — the passphrase is encrypted and no terminal is attached. ` +
         `Payouts and ADM notifications are paused. Run \`adm-pool unlock\` (control socket: ${socketPath}).`,

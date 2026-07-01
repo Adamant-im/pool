@@ -90,6 +90,7 @@
   <VoterTable
     rows={voters}
     votesWeight={store?.delegate.votesWeight}
+    activeAddresses={new Set((store?.delegate.voters ?? []).map((voter) => voter.address))}
   />
 
   <TransactionTable

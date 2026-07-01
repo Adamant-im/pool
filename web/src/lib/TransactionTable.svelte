@@ -7,24 +7,22 @@
 
   import {formatDate, formatNumber, sortBy, splitWholeDecimalNumberParts} from '../utils.js';
 
-  export let rows = [];
+  let {rows = []} = $props();
 
-  $: transactions = sortBy(sortDirection, sort, rows);
+  let perPage = $state(10);
+  let currentPage = $state(0);
+  let sortDirection = $state('descending');
+  let sort = $state('timeStamp');
 
-  let rowsPerPage = 10;
-  let currentPage = 0;
+  const transactions = $derived(sortBy(sortDirection, sort, rows.slice()));
+  const lastPage = $derived(Math.max(Math.ceil(transactions.length / perPage) - 1, 0));
+  const start = $derived(currentPage * perPage);
+  const end = $derived(Math.min(start + perPage, transactions.length));
+  const slice = $derived(transactions.slice(start, end));
 
-  $: start = currentPage * rowsPerPage;
-  $: end = Math.min(start + rowsPerPage, transactions.length);
-  $: slice = transactions.slice(start, end);
-  $: lastPage = Math.max(Math.ceil(transactions.length / rowsPerPage) - 1, 0);
-
-  let sortDirection = 'descending';
-  let sort = 'timeStamp';
-
-  function handleSort() {
-    transactions = sortBy(sortDirection, sort, transactions);
-  }
+  $effect(() => {
+    if (currentPage > lastPage) currentPage = lastPage;
+  });
 </script>
 
 <style>
@@ -44,7 +42,6 @@
     sortable
     bind:sort={sort}
     bind:sortDirection={sortDirection}
-    on:SMUIDataTable:sorted={handleSort}
     table$aria-label="Transaction list"
     style="width: 100%;"
   >
@@ -61,7 +58,7 @@
           <Label>ID</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
-        <Cell columnId="payoutcount">
+        <Cell numeric columnId="payoutcount">
           <Label>Amount</Label>
           <IconButton class="material-icons">arrow_upward</IconButton>
         </Cell>
@@ -81,7 +78,7 @@
     <Body>
       {#each slice as item, index}
         <Row>
-          <Cell numeric>{index + 1 + currentPage * rowsPerPage}</Cell>
+          <Cell numeric>{index + 1 + currentPage * perPage}</Cell>
           <Cell>
             <a
                     href={`https://explorer.adamant.im/address/${item.address}`}
@@ -115,47 +112,49 @@
       {/each}
     </Body>
 
-    <Pagination slot="paginate">
-      <svelte:fragment slot="rowsPerPage">
-        <Label>Rows Per Page</Label>
-        <Select variant="outlined" bind:value={rowsPerPage} noLabel>
-          <Option value={10}>10</Option>
-          <Option value={25}>25</Option>
-          <Option value={100}>100</Option>
-        </Select>
-      </svelte:fragment>
-      <svelte:fragment slot="total">
-        {start + 1}-{end} of {transactions.length}
-      </svelte:fragment>
+    {#snippet paginate()}
+      <Pagination>
+        {#snippet rowsPerPage()}
+          <Label>Rows Per Page</Label>
+          <Select variant="outlined" bind:value={perPage} noLabel>
+            <Option value={10}>10</Option>
+            <Option value={25}>25</Option>
+            <Option value={100}>100</Option>
+          </Select>
+        {/snippet}
+        {#snippet total()}
+          {start + 1}-{end} of {transactions.length}
+        {/snippet}
 
-      <IconButton
-        class="material-icons"
-        action="first-page"
-        title="First page"
-        on:click={() => (currentPage = 0)}
-        disabled={currentPage === 0}>first_page</IconButton
-      >
-      <IconButton
-        class="material-icons"
-        action="prev-page"
-        title="Prev page"
-        on:click={() => currentPage--}
-        disabled={currentPage === 0}>chevron_left</IconButton
-      >
-      <IconButton
-        class="material-icons"
-        action="next-page"
-        title="Next page"
-        on:click={() => currentPage++}
-        disabled={currentPage === lastPage}>chevron_right</IconButton
-      >
-      <IconButton
-        class="material-icons"
-        action="last-page"
-        title="Last page"
-        on:click={() => (currentPage = lastPage)}
-        disabled={currentPage === lastPage}>last_page</IconButton
-      >
-    </Pagination>
+        <IconButton
+          class="material-icons"
+          action="first-page"
+          title="First page"
+          onclick={() => (currentPage = 0)}
+          disabled={currentPage === 0}>first_page</IconButton
+        >
+        <IconButton
+          class="material-icons"
+          action="prev-page"
+          title="Prev page"
+          onclick={() => currentPage--}
+          disabled={currentPage === 0}>chevron_left</IconButton
+        >
+        <IconButton
+          class="material-icons"
+          action="next-page"
+          title="Next page"
+          onclick={() => currentPage++}
+          disabled={currentPage === lastPage}>chevron_right</IconButton
+        >
+        <IconButton
+          class="material-icons"
+          action="last-page"
+          title="Last page"
+          onclick={() => (currentPage = lastPage)}
+          disabled={currentPage === lastPage}>last_page</IconButton
+        >
+      </Pagination>
+    {/snippet}
   </DataTable>
 </div>

@@ -7,36 +7,54 @@
 
   import {formatNumber, splitWholeDecimalNumberParts, sortBy} from '../utils.js';
 
-  export let rows = [];
-  export let votesWeight;
+  let {rows = [], votesWeight, activeAddresses = new Set()} = $props();
 
-  $: voters = sortBy(sortDirection, sort, rows);
+  let activeOnly = $state(false);
+  let perPage = $state(10);
+  let currentPage = $state(0);
+  let sortDirection = $state('descending');
+  let sort = $state('pending');
 
-  let rowsPerPage = 10;
-  let currentPage = 0;
+  const filteredRows = $derived(
+    activeOnly ? rows.filter((voter) => activeAddresses.has(voter.address)) : rows,
+  );
+  const voters = $derived(sortBy(sortDirection, sort, filteredRows.slice()));
+  const lastPage = $derived(Math.max(Math.ceil(voters.length / perPage) - 1, 0));
+  const start = $derived(currentPage * perPage);
+  const end = $derived(Math.min(start + perPage, voters.length));
+  const slice = $derived(voters.slice(start, end));
 
-  $: start = currentPage * rowsPerPage;
-  $: end = Math.min(start + rowsPerPage, voters.length);
-  $: slice = voters.slice(start, end);
-  $: lastPage = Math.max(Math.ceil(voters.length / rowsPerPage) - 1, 0);
-
-  let sortDirection = 'descending';
-  let sort = 'pending';
+  // Keep the current page within range when the list shrinks (filter/perPage).
+  $effect(() => {
+    if (currentPage > lastPage) currentPage = lastPage;
+  });
 
   function calcWeightPercent(weightADM) {
     const weightPercent = weightADM / votesWeight * 10000000000;
 
     return weightPercent > 0 && weightPercent < 0.01 ? '> 0.01' : weightPercent.toFixed(2);
   }
-
-  function handleSort() {
-    voters = sortBy(sortDirection, sort, voters);
-  }
 </script>
 
 <style>
   .bold-white {
     font-weight: bold;
+  }
+
+  .active-filter {
+    display: flex;
+    align-items: center;
+    gap: .375rem;
+    margin-left: auto;
+    font-size: .875rem;
+    color: #b8b8b8;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .active-filter input {
+    cursor: pointer;
+    accent-color: var(--mdc-theme-primary);
   }
 </style>
 
@@ -46,12 +64,19 @@
     <span class="text-secondary text-sm font-medium">
       {voters.length}
     </span>
+    <label class="active-filter">
+      <input
+        type="checkbox"
+        bind:checked={activeOnly}
+        onchange={() => (currentPage = 0)}
+      />
+      active voters only
+    </label>
   </div>
   <DataTable
     sortable
     bind:sort={sort}
     bind:sortDirection={sortDirection}
-    on:SMUIDataTable:sorted={handleSort}
     table$aria-label="User list"
     style="width: 100%;"
   >
@@ -100,7 +125,7 @@
     <Body>
       {#each slice as voter, index}
         <Row>
-          <Cell numeric>{ index + 1 + currentPage * rowsPerPage }</Cell>
+          <Cell numeric>{ index + 1 + currentPage * perPage }</Cell>
           <Cell>
             <a
                     href={`https://explorer.adamant.im/address/${voter.address}`}
@@ -172,7 +197,7 @@
             {/if}
           </Cell>
           <Cell numeric>
-            {#if voter.votesWeight && voter.weightADM}
+            {#if votesWeight && voter.weightADM}
               {@const formatted = splitWholeDecimalNumberParts(calcWeightPercent(voter.weightADM))}
               {#if formatted.decimal}
                 <span class="bold-white">{formatted.whole}</span><span>{formatted.decimal}</span>
@@ -187,47 +212,49 @@
       {/each}
     </Body>
 
-    <Pagination slot="paginate" class="flex-wrap">
-      <svelte:fragment slot="rowsPerPage">
-        <Label>Rows Per Page</Label>
-        <Select variant="outlined" bind:value={rowsPerPage} noLabel>
-          <Option value={10}>10</Option>
-          <Option value={25}>25</Option>
-          <Option value={100}>100</Option>
-        </Select>
-      </svelte:fragment>
-      <svelte:fragment slot="total">
-        {start + 1}-{end} of {voters.length}
-      </svelte:fragment>
+    {#snippet paginate()}
+      <Pagination class="flex-wrap">
+        {#snippet rowsPerPage()}
+          <Label>Rows Per Page</Label>
+          <Select variant="outlined" bind:value={perPage} noLabel>
+            <Option value={10}>10</Option>
+            <Option value={25}>25</Option>
+            <Option value={100}>100</Option>
+          </Select>
+        {/snippet}
+        {#snippet total()}
+          {start + 1}-{end} of {voters.length}
+        {/snippet}
 
-      <IconButton
-        class="material-icons"
-        action="first-page"
-        title="First page"
-        on:click={() => (currentPage = 0)}
-        disabled={currentPage === 0}>first_page</IconButton
-      >
-      <IconButton
-        class="material-icons"
-        action="prev-page"
-        title="Prev page"
-        on:click={() => currentPage--}
-        disabled={currentPage === 0}>chevron_left</IconButton
-      >
-      <IconButton
-        class="material-icons"
-        action="next-page"
-        title="Next page"
-        on:click={() => currentPage++}
-        disabled={currentPage === lastPage}>chevron_right</IconButton
-      >
-      <IconButton
-        class="material-icons"
-        action="last-page"
-        title="Last page"
-        on:click={() => (currentPage = lastPage)}
-        disabled={currentPage === lastPage}>last_page</IconButton
-      >
-    </Pagination>
+        <IconButton
+          class="material-icons"
+          action="first-page"
+          title="First page"
+          onclick={() => (currentPage = 0)}
+          disabled={currentPage === 0}>first_page</IconButton
+        >
+        <IconButton
+          class="material-icons"
+          action="prev-page"
+          title="Prev page"
+          onclick={() => currentPage--}
+          disabled={currentPage === 0}>chevron_left</IconButton
+        >
+        <IconButton
+          class="material-icons"
+          action="next-page"
+          title="Next page"
+          onclick={() => currentPage++}
+          disabled={currentPage === lastPage}>chevron_right</IconButton
+        >
+        <IconButton
+          class="material-icons"
+          action="last-page"
+          title="Last page"
+          onclick={() => (currentPage = lastPage)}
+          disabled={currentPage === lastPage}>last_page</IconButton
+        >
+      </Pagination>
+    {/snippet}
   </DataTable>
 </div>

@@ -328,7 +328,7 @@ p {
 
 .mdc-data-table__header-cell--numeric .mdc-data-table__header-cell-wrapper {
   flex-direction: row-reverse;
-  justify-content: flex-end;
+  justify-content: flex-start;
   width: 100%;
 }
 
