@@ -1,6 +1,6 @@
 {
   "name": "adamant-pool",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "ADAMANT delegate forging pool with automated voter rewards, payouts, and dashboard",
   "main": "server/src/app.js",
   "bin": {
