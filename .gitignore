@@ -13,3 +13,4 @@ config.jsonc
 
 # ai
 .ai-ignored/
+.claude/
