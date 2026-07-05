@@ -34,10 +34,10 @@ describe('lock notifications', () => {
   });
 
   it('sends an info notification when the pool unlocks', () => {
-    notifyPoolUnlocked('U123456789');
+    notifyPoolUnlocked();
 
     expect(notifier).toHaveBeenCalledWith(
-        'Pool U123456789: Pool unlocked. Payouts and ADM notifications are enabled.',
+        'Pool test-pool (U123456789): Pool unlocked. Payouts are enabled.',
         'info',
     );
   });

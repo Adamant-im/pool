@@ -63,11 +63,12 @@ class Payer {
       return this.retry();
     }
 
-    if (retryNo > 0) {
-      log.log(`Retrying reward payouts (${nextRetryNo}/${RETRY_PAYOUTS_COUNT + 1}). ${infoString}`);
-    } else {
-      log.info(`Ready to process scheduled reward payouts. ${infoString}`);
-    }
+    notifier(
+        retryNo > 0 ?
+          `Pool ${config.logName}: Retrying reward payouts (${nextRetryNo}/${RETRY_PAYOUTS_COUNT + 1}).\n${infoString}` :
+          `Pool ${config.logName}: Ready to process scheduled reward payouts.\n${infoString}`,
+        'log',
+    );
 
     const {
       paidUserRewards,
@@ -91,7 +92,7 @@ class Payer {
     const isEveryVoterRewarded = paidCount === votersToReward.length;
     const isEveryRewardSaved = updatedVoters === paidCount && savedTransactions === paidCount;
 
-    const notifyType = isEveryRewardSaved ? 'log' : 'warn';
+    const notifyType = isEveryVoterRewarded && isEveryRewardSaved ? 'info' : 'warn';
 
     let payoutInfoString = `I have ${isEveryVoterRewarded ? 'successfully ' : ''}paid ${isEveryRewardSaved ? 'and saved ' : ''}`;
 
